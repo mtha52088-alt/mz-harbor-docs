@@ -1221,12 +1221,25 @@ function swapPorts() {
   const to = document.getElementById('toPort');
   const fromVal = from.value;
   const toVal = to.value;
+
+  const sendInput = document.getElementById('docSendLocation');
+  const recvInput = document.getElementById('docReceiveLocation');
+  const sendVal = sendInput.value;
+  const recvVal = recvInput.value;
+  sendInput.value = recvVal;
+  recvInput.value = sendVal;
+  document.querySelectorAll('#sendLocationTags .quick-tag').forEach(t => {
+    t.classList.toggle('selected', t.textContent === sendInput.value);
+  });
+  document.querySelectorAll('#receiveLocationTags .quick-tag').forEach(t => {
+    t.classList.toggle('selected', t.textContent === recvInput.value);
+  });
+
+  filterRoutesByLocation();
+
   from.value = toVal;
   to.value = fromVal;
-  document.querySelectorAll('#routeTags .quick-tag').forEach(t => t.classList.remove('selected'));
-  document.getElementById('scheduleGroup').style.display = 'none';
-  document.getElementById('scheduleTags').innerHTML = '';
-  document.getElementById('docArriveTime').value = '';
+
   const routes = getRoutes();
   const match = routes.findIndex(r => r.from === toVal && r.to === fromVal);
   if (match >= 0) {
@@ -1234,6 +1247,7 @@ function swapPorts() {
     btns.forEach(b => {
       if (b.textContent === routes[match].name) {
         b.classList.add('selected');
+        currentRouteIndex = match;
         const via = routes[match].via;
         if (via) {
           document.getElementById('viaPort').value = via;
