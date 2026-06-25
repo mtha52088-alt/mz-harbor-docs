@@ -1,0 +1,2111 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>收發登記系統</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --primary: #1a73e8;
+  --primary-dark: #1557b0;
+  --success: #34a853;
+  --danger: #ea4335;
+  --warning: #fbbc04;
+  --bg: #f0f2f5;
+  --card: #ffffff;
+  --text: #1a1a1a;
+  --text-secondary: #5f6368;
+  --border: #dadce0;
+  --shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Microsoft JhengHei', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 16px;
+  min-height: 100vh;
+  padding-bottom: 80px;
+}
+
+/* 頂部導航 */
+.header {
+  background: var(--primary);
+  color: white;
+  padding: 16px 20px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+.header h1 { font-size: 20px; font-weight: 600; }
+.header .subtitle { font-size: 13px; opacity: 0.85; margin-top: 2px; }
+
+/* 底部導航 */
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: white;
+  display: flex;
+  box-shadow: 0 -2px 8px rgba(0,0,0,0.1);
+  z-index: 100;
+}
+.nav-item {
+  flex: 1;
+  padding: 10px 0;
+  text-align: center;
+  font-size: 12px;
+  color: var(--text-secondary);
+  border: none;
+  background: none;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+.nav-item.active { color: var(--primary); }
+.nav-item .nav-icon { font-size: 24px; display: block; margin-bottom: 2px; }
+
+/* 頁面 */
+.page { display: none; padding: 16px; }
+.page.active { display: block; }
+
+/* 卡片 */
+.card {
+  background: var(--card);
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 16px;
+  box-shadow: var(--shadow);
+}
+.card-title {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 16px;
+  color: var(--primary);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* 表單 */
+.form-group { margin-bottom: 16px; }
+.form-label {
+  display: block;
+  font-size: 14px;
+  font-weight: 500;
+  margin-bottom: 6px;
+  color: var(--text-secondary);
+}
+.form-input, .form-select, .form-textarea {
+  width: 100%;
+  padding: 12px 14px;
+  border: 2px solid var(--border);
+  border-radius: 10px;
+  font-size: 16px;
+  font-family: inherit;
+  transition: border-color 0.2s;
+  -webkit-appearance: none;
+  background: white;
+}
+.form-input:focus, .form-select:focus, .form-textarea:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+.form-textarea { min-height: 80px; resize: vertical; }
+.form-select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%235f6368' d='M6 8L1 3h10z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; padding-right: 36px; }
+
+/* 收發文切換 */
+.type-toggle {
+  display: flex;
+  gap: 0;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 2px solid var(--primary);
+}
+.type-btn {
+  flex: 1;
+  padding: 12px;
+  border: none;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: white;
+  color: var(--primary);
+}
+.type-btn.active {
+  background: var(--primary);
+  color: white;
+}
+
+/* 快速選擇標籤 */
+.quick-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+.quick-tag {
+  padding: 8px 16px;
+  border-radius: 20px;
+  border: 1.5px solid var(--border);
+  background: white;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+.quick-tag:hover, .quick-tag.selected {
+  background: var(--primary);
+  color: white;
+  border-color: var(--primary);
+}
+.quick-tag.add-new {
+  border-style: dashed;
+  color: var(--primary);
+  border-color: var(--primary);
+}
+
+/* 按鈕 */
+.btn {
+  width: 100%;
+  padding: 14px;
+  border: none;
+  border-radius: 10px;
+  font-size: 17px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.btn-primary { background: var(--primary); color: white; }
+.btn-primary:hover { background: var(--primary-dark); }
+.btn-primary:active { transform: scale(0.98); }
+.btn-success { background: var(--success); color: white; }
+.btn-danger { background: var(--danger); color: white; }
+.btn-small { width: auto; padding: 8px 16px; font-size: 14px; }
+
+/* 紀錄列表 */
+.record-card {
+  background: var(--card);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 12px;
+  box-shadow: var(--shadow);
+  border-left: 4px solid var(--primary);
+  position: relative;
+}
+.record-card.type-receive { border-left-color: var(--success); }
+.record-card.type-send { border-left-color: var(--primary); }
+.record-type-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  color: white;
+  margin-bottom: 8px;
+}
+.badge-receive { background: var(--success); }
+.badge-send { background: var(--primary); }
+.record-title { font-size: 16px; font-weight: 600; margin-bottom: 6px; }
+.record-detail { font-size: 13px; color: var(--text-secondary); margin-bottom: 3px; display: flex; align-items: center; gap: 6px; }
+.record-detail .icon { width: 16px; text-align: center; }
+.record-actions { display: flex; gap: 8px; margin-top: 10px; }
+.record-actions button { flex: 1; padding: 8px; border: 1.5px solid var(--border); border-radius: 8px; background: white; font-size: 13px; cursor: pointer; }
+.record-actions button.delete-btn { color: var(--danger); border-color: var(--danger); }
+
+/* 搜尋 */
+.search-bar {
+  position: relative;
+  margin-bottom: 16px;
+}
+.search-bar input {
+  width: 100%;
+  padding: 12px 14px 12px 42px;
+  border: 2px solid var(--border);
+  border-radius: 10px;
+  font-size: 16px;
+  background: white;
+}
+.search-bar input:focus { outline: none; border-color: var(--primary); }
+.search-bar .search-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); font-size: 18px; color: var(--text-secondary); }
+
+/* 篩選 */
+.filter-row { display: flex; gap: 8px; margin-bottom: 16px; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.filter-chip {
+  padding: 8px 16px;
+  border-radius: 20px;
+  border: 1.5px solid var(--border);
+  background: white;
+  font-size: 14px;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.filter-chip.active { background: var(--primary); color: white; border-color: var(--primary); }
+
+/* 設定 */
+.setting-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--border);
+}
+.setting-item:last-child { border-bottom: none; }
+.setting-label { font-size: 15px; }
+.setting-desc { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
+
+/* 統計 */
+.stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
+.stat-card {
+  background: var(--card);
+  border-radius: 12px;
+  padding: 16px;
+  text-align: center;
+  box-shadow: var(--shadow);
+}
+.stat-number { font-size: 28px; font-weight: 700; color: var(--primary); }
+.stat-label { font-size: 13px; color: var(--text-secondary); margin-top: 4px; }
+
+/* 管理標籤列表 */
+.manage-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+.manage-item button {
+  background: none;
+  border: none;
+  color: var(--danger);
+  font-size: 20px;
+  cursor: pointer;
+  padding: 4px 8px;
+}
+.manage-item .edit-name {
+  border: none;
+  background: none;
+  font-size: 15px;
+  font-family: inherit;
+  color: var(--text);
+  padding: 2px 4px;
+  border-radius: 4px;
+  cursor: pointer;
+  min-width: 60px;
+}
+.manage-item .edit-name:focus {
+  outline: none;
+  background: #e8f0fe;
+  border: 1px solid var(--primary);
+  cursor: text;
+}
+.sort-btn {
+  background: #f0f0f0 !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 4px !important;
+  color: var(--text-secondary) !important;
+  font-size: 10px !important;
+  padding: 2px 6px !important;
+  cursor: pointer;
+  line-height: 1;
+}
+.sort-btn:disabled { opacity: 0.3; cursor: default; }
+
+/* Toast */
+.toast {
+  position: fixed;
+  top: 80px;
+  left: 50%;
+  transform: translateX(-50%) translateY(-20px);
+  background: #333;
+  color: white;
+  padding: 12px 24px;
+  border-radius: 10px;
+  font-size: 15px;
+  z-index: 999;
+  opacity: 0;
+  transition: all 0.3s;
+  pointer-events: none;
+  white-space: nowrap;
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* 彈窗 */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 200;
+  align-items: flex-end;
+  justify-content: center;
+}
+.modal-overlay.show { display: flex; }
+.modal-content {
+  background: white;
+  border-radius: 16px 16px 0 0;
+  padding: 24px 20px;
+  width: 100%;
+  max-width: 500px;
+  max-height: 70vh;
+  overflow-y: auto;
+  animation: slideUp 0.3s ease;
+}
+@keyframes slideUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+.modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+.modal-header h3 { font-size: 18px; }
+.modal-close { background: none; border: none; font-size: 28px; color: var(--text-secondary); cursor: pointer; padding: 0 4px; }
+
+/* 空狀態 */
+.empty-state { text-align: center; padding: 40px 20px; color: var(--text-secondary); }
+.empty-state .empty-icon { font-size: 48px; margin-bottom: 12px; }
+.empty-state p { font-size: 15px; }
+
+/* 日期群組標題 */
+.date-group-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  padding: 8px 0;
+  margin-top: 8px;
+}
+
+/* 照片上傳 */
+.photo-upload-area {
+  border: 2px dashed var(--border);
+  border-radius: 12px;
+  min-height: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: border-color 0.2s;
+  overflow: hidden;
+}
+.photo-upload-area:active { border-color: var(--primary); }
+.photo-placeholder { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 20px; }
+.photo-preview-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 8px;
+  width: 100%;
+}
+.photo-thumb-wrap {
+  position: relative;
+  width: calc(33.33% - 6px);
+  aspect-ratio: 1;
+  border-radius: 8px;
+  overflow: hidden;
+}
+.photo-thumb-wrap img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.photo-thumb-remove {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 24px;
+  height: 24px;
+  background: rgba(0,0,0,0.6);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+/* 照片檢視彈窗 */
+.photo-viewer {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.9);
+  z-index: 300;
+  display: none;
+  align-items: center;
+  justify-content: center;
+}
+.photo-viewer.show { display: flex; }
+.photo-viewer img { max-width: 95%; max-height: 90vh; object-fit: contain; border-radius: 4px; }
+.photo-viewer-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: rgba(255,255,255,0.3);
+  border: none;
+  color: white;
+  font-size: 28px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+@media (min-width: 600px) {
+  .page { max-width: 540px; margin: 0 auto; }
+  .bottom-nav { max-width: 540px; left: 50%; transform: translateX(-50%); border-radius: 16px 16px 0 0; }
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>📋 收發登記系統</h1>
+  <div class="subtitle">港務處寄送管理</div>
+</div>
+
+<!-- 登記頁 -->
+<div class="page active" id="page-register">
+  <div class="card">
+    <div class="card-title">📝 寄送方向</div>
+    <div class="type-toggle" style="margin-bottom:12px">
+      <button class="type-btn active" onclick="setDirection('send')" id="btn-send">📤 寄出</button>
+      <button class="type-btn" onclick="setDirection('receive')" id="btn-receive">📥 收件</button>
+    </div>
+    <div class="form-group">
+      <label class="form-label">物件類型</label>
+      <div class="quick-tags" id="itemTypeTags"></div>
+    </div>
+    <div class="form-group" style="margin-bottom:0">
+      <label class="form-label">數量</label>
+      <input type="number" class="form-input" id="docQuantity" value="1" min="1" style="width:100px">
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">👤 寄件人 <span style="color:var(--danger);font-size:13px">*必填</span></div>
+    <div class="form-group">
+      <select class="form-select" id="docSender" onchange="localStorage.setItem('last_sender', this.value)">
+        <option value="">選擇寄件人</option>
+      </select>
+    </div>
+    <div class="form-group" style="margin-bottom:0">
+      <label class="form-label">寄件地點（選填）</label>
+      <div class="quick-tags" id="sendLocationTags"></div>
+      <input type="text" class="form-input" id="docSendLocation" placeholder="或直接輸入寄件地點" style="margin-top:10px">
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">📬 收件資訊 <span style="color:var(--danger);font-size:13px">*必填</span></div>
+    <div class="form-group">
+      <label class="form-label">收件人</label>
+      <select class="form-select" id="docReceiver" onchange="toggleReceiverCustom(this)">
+        <option value="">選擇收件人</option>
+      </select>
+      <input type="text" class="form-input" id="docReceiverCustom" placeholder="輸入收件人" style="display:none;margin-top:8px">
+    </div>
+    <div class="form-group" style="margin-bottom:0">
+      <label class="form-label">收件地點（選填）</label>
+      <div class="quick-tags" id="receiveLocationTags"></div>
+      <input type="text" class="form-input" id="docReceiveLocation" placeholder="或直接輸入收件地點" style="margin-top:10px">
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">🗺️ 航程選擇</div>
+    <div class="form-group">
+      <label class="form-label">快速選擇航線（選了自動帶入出發地/目的地）</label>
+      <div class="quick-tags" id="routeTags"></div>
+    </div>
+    <div style="display:flex; gap:10px">
+      <div class="form-group" style="flex:1">
+        <label class="form-label">出發地</label>
+        <select class="form-select" id="fromPort" onchange="clearRouteSelection()">
+          <option value="">選擇出發港口</option>
+        </select>
+      </div>
+      <button type="button" onclick="swapPorts()" style="display:flex;align-items:center;padding-top:18px;font-size:20px;background:none;border:none;cursor:pointer" title="交換出發地和目的地">⇄</button>
+      <div class="form-group" style="flex:1">
+        <label class="form-label">目的地</label>
+        <select class="form-select" id="toPort" onchange="clearRouteSelection()">
+          <option value="">選擇目的港口</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group" id="viaPortGroup" style="display:none">
+      <label class="form-label">經由（中停港）</label>
+      <input type="text" class="form-input" id="viaPort" placeholder="中停港口" readonly style="background:#f8f9fa">
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">🚢 船隻</div>
+    <div class="form-group">
+      <label class="form-label">選擇船隻（點選或手動輸入）</label>
+      <div class="quick-tags" id="shipTags"></div>
+      <input type="text" class="form-input" id="shipName" placeholder="或直接輸入船隻名稱" style="margin-top:10px">
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">🕐 時間資訊</div>
+    <div style="display:flex; gap:10px">
+      <div class="form-group" style="flex:1">
+        <label class="form-label">出發日期</label>
+        <input type="date" class="form-input" id="docDate">
+      </div>
+      <div class="form-group" style="flex:1">
+        <label class="form-label">到港日期</label>
+        <input type="date" class="form-input" id="docArriveDate">
+      </div>
+    </div>
+    <div class="form-group" id="scheduleGroup" style="display:none">
+      <label class="form-label">選擇班次</label>
+      <div class="quick-tags" id="scheduleTags"></div>
+    </div>
+    <div style="display:flex; gap:10px">
+      <div class="form-group" style="flex:1">
+        <label class="form-label">出發時間</label>
+        <input type="time" class="form-input" id="docTime">
+      </div>
+      <div class="form-group" style="flex:1">
+        <label class="form-label">到港時間</label>
+        <input type="time" class="form-input" id="docArriveTime">
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">📷 照片 <span id="photoCountLabel" style="font-size:13px;color:var(--text-secondary);font-weight:400"></span></div>
+    <div class="form-group">
+      <div class="photo-upload-area" id="photoArea" onclick="document.getElementById('photoInput').click()">
+        <div class="photo-placeholder" id="photoPlaceholder">
+          <span style="font-size:36px">📷</span>
+          <span style="font-size:14px; color:var(--text-secondary)">點擊拍照或選擇照片</span>
+        </div>
+        <div class="photo-preview-list" id="photoPreviewList"></div>
+      </div>
+      <input type="file" id="photoInput" accept="image/*" capture="environment" multiple
+        style="display:none" onchange="handlePhotos(event)">
+      <div style="display:flex; gap:8px; margin-top:8px">
+        <button type="button" class="btn btn-small" onclick="document.getElementById('photoInput').click()"
+          style="flex:1; background:#f0f0f0; color:var(--text)">📷 拍照 / 選圖</button>
+        <button type="button" class="btn btn-small" onclick="clearPhotos()"
+          style="flex:1; background:#f0f0f0; color:var(--danger)" id="clearPhotoBtn" disabled>🗑 清除照片</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">💬 備註</div>
+    <div class="form-group">
+      <textarea class="form-textarea" id="docNote" placeholder="其他備註事項（選填）" rows="2"></textarea>
+    </div>
+  </div>
+
+  <button class="btn btn-primary" onclick="submitRecord()" style="margin-bottom:16px">
+    ✅ 送出登記並通知
+  </button>
+</div>
+
+<!-- 紀錄頁 -->
+<div class="page" id="page-records">
+  <div class="search-bar">
+    <span class="search-icon">🔍</span>
+    <input type="text" id="searchInput" placeholder="搜尋字號、船隻、地點..." oninput="renderRecords()">
+  </div>
+  <div class="filter-row">
+    <button class="filter-chip active" onclick="setFilter('all', this)">全部</button>
+    <button class="filter-chip" onclick="setFilter('send', this)">📤 寄出</button>
+    <button class="filter-chip" onclick="setFilter('receive', this)">📥 收件</button>
+  </div>
+  <div id="recordList"></div>
+</div>
+
+<!-- 統計頁 -->
+<div class="page" id="page-stats">
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-number" id="statTotal">0</div>
+      <div class="stat-label">總登記數</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-number" id="statToday">0</div>
+      <div class="stat-label">今日登記</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-number" id="statSend">0</div>
+      <div class="stat-label">寄出</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-number" id="statReceive" style="color:var(--success)">0</div>
+      <div class="stat-label">收件</div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">🚢 各船隻統計</div>
+    <div id="shipStats"></div>
+  </div>
+  <div class="card">
+    <div class="card-title">🗺️ 各航程統計</div>
+    <div id="locationStats"></div>
+  </div>
+</div>
+
+<!-- 設定頁 -->
+<div class="page" id="page-settings">
+  <div class="card">
+    <div class="card-title">🔔 LINE 通知設定</div>
+    <div class="form-group">
+      <label class="form-label">通知目標 ID（User ID 或 Group ID）</label>
+      <input type="text" class="form-input" id="lineTargetId" placeholder="貼上 User ID 或 Group ID">
+    </div>
+    <div class="form-group" style="font-size:13px; color:var(--text-secondary); line-height:1.6">
+      預設會發送通知給管理員。若要改發到群組，請將官方帳號加入群組後，填入 Group ID。
+    </div>
+    <button class="btn btn-success btn-small" onclick="saveTargetId()" style="width:100%">💾 儲存目標 ID</button>
+    <button class="btn btn-small" onclick="testLine()" style="width:100%; margin-top:8px; background:#f0f0f0; color:var(--text)">🧪 測試通知</button>
+  </div>
+
+  <div class="card">
+    <div class="card-title">👤 管理寄件人清單</div>
+    <div id="manageSenders"></div>
+    <div style="display:flex; gap:8px; margin-top:12px">
+      <input type="text" class="form-input" id="newSender" placeholder="新增寄件人姓名" style="flex:1">
+      <button class="btn btn-primary btn-small" onclick="addSender()">新增</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">📬 管理收件人清單</div>
+    <div id="manageReceivers"></div>
+    <div style="display:flex; gap:8px; margin-top:12px">
+      <input type="text" class="form-input" id="newReceiver" placeholder="新增收件人姓名" style="flex:1">
+      <button class="btn btn-primary btn-small" onclick="addReceiver()">新增</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">🚢 管理船隻清單</div>
+    <div id="manageShips"></div>
+    <div style="display:flex; gap:8px; margin-top:12px">
+      <input type="text" class="form-input" id="newShip" placeholder="新增船隻名稱" style="flex:1">
+      <button class="btn btn-primary btn-small" onclick="addShip()">新增</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">📍 管理港口清單</div>
+    <div id="manageLocations"></div>
+    <div style="display:flex; gap:8px; margin-top:12px">
+      <input type="text" class="form-input" id="newLocation" placeholder="新增港口名稱" style="flex:1">
+      <button class="btn btn-primary btn-small" onclick="addLocation()">新增</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">🗺️ 管理航線清單</div>
+    <div id="manageRoutes"></div>
+    <div style="margin-top:12px">
+      <div class="form-group">
+        <input type="text" class="form-input" id="newRouteName" placeholder="航線名稱（如：南竿→北竿）">
+      </div>
+      <div style="display:flex; gap:8px">
+        <input type="text" class="form-input" id="newRouteFrom" placeholder="出發地" style="flex:1">
+        <input type="text" class="form-input" id="newRouteTo" placeholder="目的地" style="flex:1">
+      </div>
+      <div style="display:flex; gap:8px; margin-top:8px">
+        <input type="text" class="form-input" id="newRouteVia" placeholder="經由（選填）" style="flex:1">
+        <button class="btn btn-primary btn-small" onclick="addRoute()">新增航線</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">📋 管理物件類型</div>
+    <div id="manageItemTypes"></div>
+    <div style="display:flex; gap:8px; margin-top:12px">
+      <input type="text" class="form-input" id="newItemType" placeholder="新增物件類型" style="flex:1">
+      <button class="btn btn-primary btn-small" onclick="addItemType()">新增</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">📦 資料管理</div>
+    <button class="btn btn-small" onclick="exportData()" style="width:100%; background:#f0f0f0; color:var(--text); margin-bottom:8px">📥 匯出所有資料 (JSON)</button>
+    <button class="btn btn-small" onclick="exportCSV()" style="width:100%; background:#f0f0f0; color:var(--text); margin-bottom:8px">📊 匯出 CSV（可用 Excel 開啟）</button>
+    <label class="btn btn-small" style="width:100%; background:#f0f0f0; color:var(--text); cursor:pointer; margin-bottom:8px">
+      📤 匯入資料 (JSON)
+      <input type="file" accept=".json" onchange="importData(event)" style="display:none">
+    </label>
+  </div>
+</div>
+
+<!-- 底部導航 -->
+<div class="bottom-nav">
+  <button class="nav-item active" onclick="switchPage('register', this)">
+    <span class="nav-icon">📝</span>登記
+  </button>
+  <button class="nav-item" onclick="switchPage('records', this)">
+    <span class="nav-icon">📋</span>紀錄
+  </button>
+  <button class="nav-item" onclick="switchPage('stats', this)">
+    <span class="nav-icon">📊</span>統計
+  </button>
+  <button class="nav-item" onclick="switchPage('settings', this)">
+    <span class="nav-icon">⚙️</span>設定
+  </button>
+</div>
+
+<!-- 照片檢視 -->
+<div class="photo-viewer" id="photoViewer" onclick="closePhotoViewer()">
+  <button class="photo-viewer-close" onclick="closePhotoViewer()">&times;</button>
+  <img id="photoViewerImg" src="">
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<!-- 詳情彈窗 -->
+<div class="modal-overlay" id="detailModal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>📄 公文詳情</h3>
+      <button class="modal-close" onclick="closeModal()">&times;</button>
+    </div>
+    <div id="detailContent"></div>
+  </div>
+</div>
+
+<script>
+// ===== 資料管理 =====
+const STORAGE_KEYS = {
+  records: 'doc_records',
+  ships: 'doc_ships',
+  locations: 'doc_locations',
+  token: 'line_token'
+};
+
+let currentDocType = 'send';
+let currentItemType = '公文';
+let currentRouteIndex = -1;
+let currentFilter = 'all';
+let pendingPhotos = []; // base64 strings
+
+const DEFAULT_ITEM_TYPES = ['公文', '發票', '包裹', '其他'];
+const DEFAULT_SENDERS = [
+  '黃騰毅處長', '郭承均課長', '陳嵐萍', '陳登偉', '陳致元', '王蕾凱', '王雅萍',
+  '王海平課長', '王文琦', '陳登壽', '黃可宸', '甘麗莞', '詹采蓉',
+  '陳學驊', '邱鶯花', '張祐誠',
+  '林振平室主任', '劉秀蓮',
+  '鄭渝靜室主任',
+  '曹以樹室主任', '陳金松'
+];
+const DEFAULT_RECEIVERS = [
+  '南竿港務處 收發',
+  '黃騰毅 處長', '郭承均 課長', '陳嵐萍', '陳登偉', '陳致元', '王蕾凱', '王雅萍',
+  '王海平 課長', '王文琦', '陳登壽', '黃可宸', '甘麗莞', '詹采蓉',
+  '陳學驊', '邱鶯花', '張祐誠',
+  '林振平 室主任', '劉秀蓮',
+  '鄭渝靜 室主任',
+  '曹以樹 室主任', '陳金松'
+];
+const DEFAULT_SHIPS = ['新臺馬輪', '臺馬之星', '東海明珠', '南北之星2號', '閩珠8號', '吉順6號', '吉順8號'];
+const DEFAULT_LOCATIONS = ['基隆港', '台北港', '南竿福澳港', '北竿白沙港', '東引中柱港', '東莒猛澳港', '西莒青帆港'];
+const DEFAULT_ROUTES = [
+  { name: '台馬航線（基隆→南竿→東引）', from: '基隆港', to: '南竿福澳港', via: '東引中柱港', note: '', schedules: [
+    { depart: '22:30', arrive: '06:00', arrive_via: '08:30', overnight: true }
+  ] },
+  { name: '台馬航線（基隆→東引→南竿）', from: '基隆港', to: '東引中柱港', via: '南竿福澳港', note: '', schedules: [
+    { depart: '22:30', arrive: '06:00', arrive_via: '08:30', overnight: true }
+  ] },
+  { name: '台馬航線（南竿→東引→基隆）', from: '南竿福澳港', to: '基隆港', via: '東引中柱港', note: '', schedules: [
+    { depart: '09:30', arrive: '18:00', arrive_via: '12:00' }
+  ] },
+  { name: '台馬航線（東引→南竿→基隆）', from: '東引中柱港', to: '基隆港', via: '南竿福澳港', note: '', schedules: [
+    { depart: '06:30', arrive: '17:00', arrive_via: '09:30' }
+  ] },
+  { name: '台北港→馬祖', from: '台北港', to: '南竿福澳港', via: '', note: '臺馬之星', schedules: [] },
+  { name: '南竿→北竿', from: '南竿福澳港', to: '北竿白沙港', via: '', note: '島際交通', schedules: [
+    { depart: '07:00', arrive: '07:15' }, { depart: '07:30', arrive: '07:45' }, { depart: '08:00', arrive: '08:15' }, { depart: '08:30', arrive: '08:45' },
+    { depart: '09:00', arrive: '09:15' }, { depart: '09:20', arrive: '09:35' }, { depart: '10:00', arrive: '10:15' }, { depart: '11:00', arrive: '11:15' },
+    { depart: '11:30', arrive: '11:45' }, { depart: '12:30', arrive: '12:45' }, { depart: '13:00', arrive: '13:15' }, { depart: '13:30', arrive: '13:45' },
+    { depart: '14:00', arrive: '14:15' }, { depart: '15:00', arrive: '15:15' }, { depart: '16:00', arrive: '16:15' }, { depart: '16:30', arrive: '16:45' },
+    { depart: '17:10', arrive: '17:25' }, { depart: '17:30', arrive: '17:45' }
+  ] },
+  { name: '北竿→南竿', from: '北竿白沙港', to: '南竿福澳港', via: '', note: '島際交通', schedules: [
+    { depart: '07:00', arrive: '07:15' }, { depart: '07:30', arrive: '07:45' }, { depart: '08:00', arrive: '08:15' }, { depart: '08:30', arrive: '08:45' },
+    { depart: '09:00', arrive: '09:15' }, { depart: '09:30', arrive: '09:45' }, { depart: '10:20', arrive: '10:35' }, { depart: '11:00', arrive: '11:15' },
+    { depart: '11:30', arrive: '11:45' }, { depart: '12:00', arrive: '12:15' }, { depart: '13:00', arrive: '13:15' }, { depart: '13:30', arrive: '13:45' },
+    { depart: '14:30', arrive: '14:45' }, { depart: '15:20', arrive: '15:35' }, { depart: '16:00', arrive: '16:15' }, { depart: '16:30', arrive: '16:45' },
+    { depart: '17:10', arrive: '17:25' }, { depart: '17:30', arrive: '17:45' }
+  ] },
+  { name: '南竿→東引', from: '南竿福澳港', to: '東引中柱港', via: '', note: '島際交通', schedules: [] },
+  { name: '南竿→西莒→東莒', from: '南竿福澳港', to: '東莒猛澳港', via: '西莒青帆港', note: '單月航線', schedules: [{ depart: '07:00', arrive: '07:40' }, { depart: '11:00', arrive: '11:40' }, { depart: '14:30', arrive: '15:10' }] },
+  { name: '西莒→東莒→南竿', from: '西莒青帆港', to: '南竿福澳港', via: '東莒猛澳港', note: '單月航線（回程）', schedules: [{ depart: '07:50', arrive: '09:00' }, { depart: '11:50', arrive: '13:00' }, { depart: '15:20', arrive: '16:30' }] },
+  { name: '南竿→東莒→西莒', from: '南竿福澳港', to: '西莒青帆港', via: '東莒猛澳港', note: '雙月航線', schedules: [{ depart: '07:00', arrive: '08:00' }, { depart: '11:00', arrive: '12:00' }, { depart: '14:30', arrive: '15:30' }] },
+  { name: '東莒→西莒→南竿', from: '東莒猛澳港', to: '南竿福澳港', via: '西莒青帆港', note: '雙月航線（回程）', schedules: [{ depart: '08:10', arrive: '09:00' }, { depart: '12:10', arrive: '13:00' }, { depart: '15:40', arrive: '16:30' }] },
+];
+
+function getData(key) {
+  try { return JSON.parse(localStorage.getItem(key)) || null; }
+  catch { return null; }
+}
+function setData(key, val) { localStorage.setItem(key, JSON.stringify(val)); }
+
+function getRecords() { return getData(STORAGE_KEYS.records) || []; }
+function saveRecords(records) { setData(STORAGE_KEYS.records, records); }
+function getShips() { return getData(STORAGE_KEYS.ships) || [...DEFAULT_SHIPS]; }
+function saveShips(ships) { setData(STORAGE_KEYS.ships, ships); }
+function getLocations() { return getData(STORAGE_KEYS.locations) || [...DEFAULT_LOCATIONS]; }
+function saveLocations(locs) { setData(STORAGE_KEYS.locations, locs); }
+
+// ===== 頁面切換 =====
+function switchPage(page, btn) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + page).classList.add('active');
+  btn.classList.add('active');
+  if (page === 'records') renderRecords();
+  if (page === 'stats') renderStats();
+  if (page === 'settings') { renderManage(); loadTargetId(); renderPortDropdowns(); }
+}
+
+// ===== 寄送方向與物件類型 =====
+function setDirection(type) {
+  currentDocType = type;
+  document.getElementById('btn-receive').classList.toggle('active', type === 'receive');
+  document.getElementById('btn-send').classList.toggle('active', type === 'send');
+}
+
+function getItemTypes() { return getData('doc_item_types') || [...DEFAULT_ITEM_TYPES]; }
+function saveItemTypes(types) { setData('doc_item_types', types); }
+
+function getSenders() { return getData('doc_senders') || [...DEFAULT_SENDERS]; }
+function saveSenders(list) { setData('doc_senders', list); }
+function getReceivers() { return getData('doc_receivers') || [...DEFAULT_RECEIVERS]; }
+function saveReceivers(list) { setData('doc_receivers', list); }
+
+function renderSenderDropdown() {
+  const senders = getSenders();
+  const sel = document.getElementById('docSender');
+  const current = sel.value || localStorage.getItem('last_sender') || '';
+  sel.innerHTML = '<option value="">選擇寄件人</option>' +
+    senders.map(s => `<option value="${s}"${s === current ? ' selected' : ''}>${s}</option>`).join('');
+}
+
+function renderReceiverDropdown() {
+  const receivers = getReceivers();
+  const sel = document.getElementById('docReceiver');
+  const current = sel.value || '';
+  sel.innerHTML = '<option value="">選擇收件人（選填）</option>' +
+    receivers.map(r => `<option value="${r}"${r === current ? ' selected' : ''}>${r}</option>`).join('') +
+    '<option value="__custom__">✏️ 自行輸入</option>';
+}
+
+function toggleReceiverCustom(sel) {
+  const customInput = document.getElementById('docReceiverCustom');
+  if (sel.value === '__custom__') {
+    customInput.style.display = '';
+    customInput.focus();
+  } else {
+    customInput.style.display = 'none';
+    customInput.value = '';
+  }
+}
+
+function getReceiverValue() {
+  const sel = document.getElementById('docReceiver');
+  if (sel.value === '__custom__') return document.getElementById('docReceiverCustom').value.trim();
+  return sel.value;
+}
+
+function renderSendLocationTags() {
+  const locs = getLocations();
+  const current = document.getElementById('docSendLocation').value;
+  document.getElementById('sendLocationTags').innerHTML =
+    locs.map(l => `<button class="quick-tag${l === current ? ' selected' : ''}" onclick="selectSendLocation(this, '${l}')">${l}</button>`).join('');
+}
+
+function selectSendLocation(btn, loc) {
+  const input = document.getElementById('docSendLocation');
+  const wasSelected = input.value === loc;
+  document.querySelectorAll('#sendLocationTags .quick-tag').forEach(t => t.classList.remove('selected'));
+  if (wasSelected) {
+    input.value = '';
+  } else {
+    btn.classList.add('selected');
+    input.value = loc;
+  }
+  refreshScheduleIfNeeded();
+}
+
+function renderReceiveLocationTags() {
+  const locs = getLocations();
+  const current = document.getElementById('docReceiveLocation').value;
+  document.getElementById('receiveLocationTags').innerHTML =
+    locs.map(l => `<button class="quick-tag${l === current ? ' selected' : ''}" onclick="selectReceiveLocation(this, '${l}')">${l}</button>`).join('');
+}
+
+function selectReceiveLocation(btn, loc) {
+  const input = document.getElementById('docReceiveLocation');
+  const wasSelected = input.value === loc;
+  document.querySelectorAll('#receiveLocationTags .quick-tag').forEach(t => t.classList.remove('selected'));
+  if (wasSelected) {
+    input.value = '';
+  } else {
+    btn.classList.add('selected');
+    input.value = loc;
+  }
+  filterRoutesByLocation();
+  refreshScheduleIfNeeded();
+}
+
+function refreshScheduleIfNeeded() {
+  if (currentRouteIndex >= 0) {
+    const routes = getRoutes();
+    const route = routes[currentRouteIndex];
+    if (route) renderScheduleTags(route.schedules || [], route);
+  }
+}
+
+function filterRoutesByLocation() {
+  const loc = document.getElementById('docReceiveLocation').value.trim();
+  const routes = getRoutes();
+  const container = document.getElementById('routeTags');
+  clearRouteSelection();
+  currentRouteIndex = -1;
+  document.getElementById('fromPort').value = '';
+  document.getElementById('toPort').value = '';
+  document.getElementById('scheduleGroup').style.display = 'none';
+  document.getElementById('scheduleTags').innerHTML = '';
+  document.getElementById('docArriveTime').value = '';
+  if (!loc) {
+    container.innerHTML = routes.map((r, i) =>
+      `<button class="quick-tag" onclick="selectRoute(${i}, this)">${r.name}</button>`
+    ).join('');
+    return;
+  }
+  const filtered = [];
+  routes.forEach((r, i) => {
+    if (r.to === loc || r.via === loc) filtered.push({ route: r, index: i });
+  });
+  if (filtered.length === 0) {
+    container.innerHTML = '<div style="color:var(--text-secondary);font-size:14px;padding:8px 0">無符合的航線</div>';
+    return;
+  }
+  container.innerHTML = filtered.map(f =>
+    `<button class="quick-tag" onclick="selectRoute(${f.index}, this)">${f.route.name}</button>`
+  ).join('');
+}
+
+function getReceiveLocationValue() {
+  return document.getElementById('docReceiveLocation').value.trim();
+}
+
+function renderItemTypeTags() {
+  const types = getItemTypes();
+  document.getElementById('itemTypeTags').innerHTML = types.map(t =>
+    `<button class="quick-tag${t === currentItemType ? ' selected' : ''}" onclick="selectItemType(this, '${t}')">${t}</button>`
+  ).join('');
+}
+
+function selectItemType(btn, type) {
+  currentItemType = type;
+  document.querySelectorAll('#itemTypeTags .quick-tag').forEach(t => t.classList.remove('selected'));
+  btn.classList.add('selected');
+}
+
+// ===== 快速標籤 =====
+function renderShipTags() {
+  const ships = getShips();
+  const container = document.getElementById('shipTags');
+  container.innerHTML = ships.map(s =>
+    `<button class="quick-tag" onclick="selectTag(this, 'shipName')">${s}</button>`
+  ).join('');
+}
+
+function renderLocationTags() {
+  // 不再用 location tags，改用航程選擇
+}
+
+function renderRouteTags() {
+  const routes = getRoutes();
+  const container = document.getElementById('routeTags');
+  container.innerHTML = routes.map((r, i) =>
+    `<button class="quick-tag" onclick="selectRoute(${i}, this)">${r.name}</button>`
+  ).join('');
+}
+
+function renderPortDropdowns() {
+  const locs = getLocations();
+  ['fromPort', 'toPort'].forEach(id => {
+    const sel = document.getElementById(id);
+    const current = sel.value;
+    sel.innerHTML = '<option value="">選擇港口</option>' +
+      locs.map(l => `<option value="${l}"${l === current ? ' selected' : ''}>${l}</option>`).join('');
+  });
+  renderSendLocationTags();
+  renderReceiveLocationTags();
+}
+
+function selectRoute(index, btn) {
+  const routes = getRoutes();
+  const route = routes[index];
+  if (!route) return;
+
+  document.querySelectorAll('#routeTags .quick-tag').forEach(t => t.classList.remove('selected'));
+  btn.classList.add('selected');
+  currentRouteIndex = index;
+
+  document.getElementById('fromPort').value = route.from;
+  document.getElementById('toPort').value = route.to;
+
+  const viaGroup = document.getElementById('viaPortGroup');
+  const viaInput = document.getElementById('viaPort');
+  if (route.via) {
+    viaInput.value = route.via;
+    viaGroup.style.display = 'block';
+  } else {
+    viaInput.value = '';
+    viaGroup.style.display = 'none';
+  }
+
+  renderScheduleTags(route.schedules || [], route);
+}
+
+function renderScheduleTags(schedules, route) {
+  const group = document.getElementById('scheduleGroup');
+  const container = document.getElementById('scheduleTags');
+  if (!schedules || schedules.length === 0) {
+    group.style.display = 'none';
+    container.innerHTML = '';
+    return;
+  }
+  const sendLoc = document.getElementById('docSendLocation').value.trim();
+  const recvLoc = document.getElementById('docReceiveLocation').value.trim();
+  group.style.display = 'block';
+  container.innerHTML = schedules.map((s, i) => {
+    let departTime = s.depart;
+    let arriveTime = s.arrive;
+    if (s.arrive_via && route) {
+      if (sendLoc === route.via) departTime = s.arrive_via;
+      if (recvLoc === route.via) arriveTime = s.arrive_via;
+    }
+    let label;
+    if (s.overnight) {
+      if (s.arrive_via && route && recvLoc === route.via) {
+        return `<button class="quick-tag" onclick="selectSchedule(this, '${departTime}', '${arriveTime}', 'yesterday')">${departTime}(昨日) → ${arriveTime}</button>` +
+          `<button class="quick-tag" onclick="selectSchedule(this, '${departTime}', '${arriveTime}', 'tomorrow')">${departTime} → ${arriveTime}(明日)</button>`;
+      }
+      return `<button class="quick-tag" onclick="selectSchedule(this, '${departTime}', '${arriveTime}', 'tomorrow')">${departTime} → ${arriveTime}(明日)</button>`;
+    }
+    label = `${departTime} → ${arriveTime}`;
+    return `<button class="quick-tag" onclick="selectSchedule(this, '${departTime}', '${arriveTime}', false)">${label}</button>`;
+  }).join('');
+}
+
+function selectSchedule(btn, depart, arrive, overnightMode) {
+  document.querySelectorAll('#scheduleTags .quick-tag').forEach(t => t.classList.remove('selected'));
+  btn.classList.add('selected');
+  document.getElementById('docTime').value = depart;
+  document.getElementById('docArriveTime').value = arrive;
+  const docDate = document.getElementById('docDate').value;
+  if (overnightMode === 'yesterday' && docDate) {
+    const d = new Date(docDate);
+    d.setDate(d.getDate() - 1);
+    document.getElementById('docDate').value = d.toISOString().split('T')[0];
+    document.getElementById('docArriveDate').value = docDate;
+  } else if (overnightMode === 'tomorrow' && docDate) {
+    const d = new Date(docDate);
+    d.setDate(d.getDate() + 1);
+    document.getElementById('docArriveDate').value = d.toISOString().split('T')[0];
+  } else if (docDate) {
+    document.getElementById('docArriveDate').value = docDate;
+  }
+}
+
+function swapPorts() {
+  const from = document.getElementById('fromPort');
+  const to = document.getElementById('toPort');
+  const fromVal = from.value;
+  const toVal = to.value;
+  from.value = toVal;
+  to.value = fromVal;
+  document.querySelectorAll('#routeTags .quick-tag').forEach(t => t.classList.remove('selected'));
+  document.getElementById('scheduleGroup').style.display = 'none';
+  document.getElementById('scheduleTags').innerHTML = '';
+  document.getElementById('docArriveTime').value = '';
+  const routes = getRoutes();
+  const match = routes.findIndex(r => r.from === toVal && r.to === fromVal);
+  if (match >= 0) {
+    const btns = document.querySelectorAll('#routeTags .quick-tag');
+    btns.forEach(b => {
+      if (b.textContent === routes[match].name) {
+        b.classList.add('selected');
+        const via = routes[match].via;
+        if (via) {
+          document.getElementById('viaPort').value = via;
+          document.getElementById('viaPortGroup').style.display = 'block';
+        }
+        renderScheduleTags(routes[match].schedules || [], routes[match]);
+      }
+    });
+  }
+}
+
+function clearRouteSelection() {
+  document.querySelectorAll('#routeTags .quick-tag').forEach(t => t.classList.remove('selected'));
+  document.getElementById('viaPort').value = '';
+  document.getElementById('viaPortGroup').style.display = 'none';
+}
+
+function selectTag(btn, inputId) {
+  const container = btn.parentElement;
+  container.querySelectorAll('.quick-tag').forEach(t => t.classList.remove('selected'));
+  btn.classList.add('selected');
+  document.getElementById(inputId).value = btn.textContent;
+}
+
+function getRoutes() { return getData('doc_routes') || [...DEFAULT_ROUTES]; }
+function saveRoutes(routes) { setData('doc_routes', routes); }
+
+// ===== 表單送出 =====
+function submitRecord() {
+  const docSender = document.getElementById('docSender').value.trim();
+  const docReceiver = getReceiverValue();
+  const docSendLocation = document.getElementById('docSendLocation').value.trim();
+  const docReceiveLocation = getReceiveLocationValue();
+  const shipName = document.getElementById('shipName').value.trim();
+  const fromPort = document.getElementById('fromPort').value;
+  const toPort = document.getElementById('toPort').value;
+  const viaPort = document.getElementById('viaPort').value.trim();
+  const docDate = document.getElementById('docDate').value;
+  const docTime = document.getElementById('docTime').value;
+  const docArriveTime = document.getElementById('docArriveTime').value;
+  const docNote = document.getElementById('docNote').value.trim();
+  const docQuantity = parseInt(document.getElementById('docQuantity').value) || 1;
+
+  if (!docSender) { showToast('⚠️ 請填寫寄件人'); return; }
+  if (!docReceiver) { showToast('⚠️ 請填寫收件人'); return; }
+  if (!shipName) { showToast('⚠️ 請選擇或輸入船隻'); return; }
+  if (!fromPort) { showToast('⚠️ 請選擇出發地'); return; }
+  if (!toPort) { showToast('⚠️ 請選擇目的地'); return; }
+  if (!docDate) { showToast('⚠️ 請選擇日期'); return; }
+
+  const location = viaPort ? `${fromPort} → ${viaPort} → ${toPort}` : `${fromPort} → ${toPort}`;
+
+  const record = {
+    id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+    type: currentDocType,
+    itemType: currentItemType,
+    docSender, docSendLocation, docReceiver, docReceiveLocation,
+    shipName, fromPort, toPort, viaPort, location,
+    docDate, docTime, docArriveTime,
+    docArriveDate: document.getElementById('docArriveDate').value,
+    docNote, docQuantity,
+    photoCount: pendingPhotos.length,
+    createdAt: new Date().toISOString()
+  };
+
+  const records = getRecords();
+  records.unshift(record);
+  saveRecords(records);
+
+  autoAddOption(shipName, getShips, saveShips);
+  autoAddOption(fromPort, getLocations, saveLocations);
+  autoAddOption(toPort, getLocations, saveLocations);
+
+  sendLineNotify(record);
+  showToast('✅ 登記成功！');
+  resetForm();
+  renderShipTags();
+  renderPortDropdowns();
+}
+
+function autoAddOption(value, getter, setter) {
+  const list = getter();
+  if (!list.includes(value)) {
+    list.push(value);
+    setter(list);
+  }
+}
+
+function resetForm() {
+  currentRouteIndex = -1;
+  // 寄件人保留上次選擇，不清空
+  ['docSendLocation', 'docReceiver', 'docReceiveLocation', 'shipName', 'docNote'].forEach(id => {
+    document.getElementById(id).value = '';
+  });
+  document.getElementById('docReceiverCustom').value = '';
+  document.getElementById('docReceiverCustom').style.display = 'none';
+  document.getElementById('docQuantity').value = '1';
+  document.querySelectorAll('#sendLocationTags .quick-tag').forEach(t => t.classList.remove('selected'));
+  document.querySelectorAll('#receiveLocationTags .quick-tag').forEach(t => t.classList.remove('selected'));
+  renderRouteTags();
+  document.getElementById('fromPort').value = '';
+  document.getElementById('toPort').value = '';
+  document.getElementById('viaPort').value = '';
+  document.getElementById('viaPortGroup').style.display = 'none';
+  document.getElementById('docArriveTime').value = '';
+  document.getElementById('scheduleGroup').style.display = 'none';
+  document.getElementById('scheduleTags').innerHTML = '';
+  const now = new Date();
+  const todayStr = now.toISOString().split('T')[0];
+  document.getElementById('docDate').value = todayStr;
+  document.getElementById('docArriveDate').value = todayStr;
+  document.getElementById('docTime').value = now.toTimeString().slice(0, 5);
+  document.querySelectorAll('.quick-tag.selected').forEach(t => t.classList.remove('selected'));
+  currentItemType = '公文';
+  renderItemTypeTags();
+  clearPhotos();
+}
+
+// ===== LINE Messaging API =====
+const LINE_CHANNEL_TOKEN = 'B78eiQSjGuzgOKGkiQlRMkn3sdJFPUGJx45YpLCZ6TgCc7TJNV+ZqOPoifggLhDhi+GPshzVIwVag9vC8FqKSrXOERgXiVvOAJqI7R1Mmyxok2NbH0o78dU4FHmcoF8PBkzlqT8FZ8hOsVyJpkQFRgdB04t89/1O/w1cDnyilFU=';
+const LINE_DEFAULT_TARGET = 'Ud65b762e9bce90db077397655791d48e';
+const LINE_PROXY_URL = 'https://script.google.com/macros/s/AKfycbzJYAgw676DpyGRfZUk2YI6ss_B3cyiaS_kvA2PieS7g0cQ2XLEL0bcU8WvqsVUJS0p/exec';
+
+function saveTargetId() {
+  const targetId = document.getElementById('lineTargetId').value.trim();
+  if (targetId) {
+    localStorage.setItem('line_target_id', targetId);
+    showToast('✅ 目標 ID 已儲存');
+  } else {
+    localStorage.removeItem('line_target_id');
+    showToast('✅ 已恢復預設（發送給管理員）');
+  }
+}
+
+function loadTargetId() {
+  const targetId = localStorage.getItem('line_target_id') || '';
+  document.getElementById('lineTargetId').value = targetId;
+}
+
+function getLineTarget() {
+  return localStorage.getItem('line_target_id') || LINE_DEFAULT_TARGET;
+}
+
+function sendLineNotify(record) {
+  const dirText = record.type === 'receive' ? '📥 收件' : '📤 寄出';
+  const itemText = record.itemType || '公文';
+  const routeText = record.location || ((record.fromPort||'') + ' → ' + (record.toPort||''));
+  const qtyText = record.docQuantity && record.docQuantity > 1 ? ` x${record.docQuantity}` : '';
+  const msg = `${dirText}【${itemText}${qtyText}】登記通知\n` +
+    `━━━━━━━━━━━━\n` +
+    `🚢 船隻：${record.shipName}\n` +
+    `🗺️ 航程：${routeText}\n` +
+    `📅 出發日期：${record.docDate}\n` +
+    (record.docArriveDate ? `📅 到港日期：${record.docArriveDate}\n` : '') +
+    (record.docTime ? `🕐 出發：${record.docTime}\n` : '') +
+    (record.docArriveTime ? `🏁 到港：${record.docArriveTime}\n` : '') +
+    (record.docSender ? `📮 寄件人：${record.docSender}\n` : '') +
+    (record.docSendLocation ? `🏢 寄件地點：${record.docSendLocation}\n` : '') +
+    (record.docReceiver ? `📬 收件人：${record.docReceiver}\n` : '') +
+    (record.docReceiveLocation ? `🏢 收件地點：${record.docReceiveLocation}\n` : '') +
+    (record.docQuantity && record.docQuantity > 1 ? `📦 數量：${record.docQuantity}\n` : '') +
+    (record.docNote ? `💬 備註：${record.docNote}\n` : '') +
+    (record.photoCount ? `📷 照片：${record.photoCount} 張\n` : '') +
+    `━━━━━━━━━━━━`;
+
+  const target = getLineTarget();
+  fetch(LINE_PROXY_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain' },
+    body: JSON.stringify({
+      token: LINE_CHANNEL_TOKEN,
+      to: target,
+      messages: [{ type: 'text', text: msg }]
+    })
+  }).then(res => {
+    if (!res.ok) res.text().then(err => console.error('LINE API error:', err));
+  }).catch(err => console.error('LINE send failed:', err));
+}
+
+function testLine() {
+  const testRecord = {
+    type: 'receive',
+    itemType: '公文',
+    shipName: '測試船隻',
+    location: '南竿福澳港 → 北竿白沙港',
+    docDate: new Date().toISOString().split('T')[0],
+    docTime: new Date().toTimeString().slice(0, 5),
+    docSender: '系統測試',
+    docReceiver: '測試收件人',
+    docNote: ''
+  };
+  sendLineNotify(testRecord);
+  showToast('📤 測試通知已送出（請確認 LINE）');
+}
+
+// ===== 紀錄列表 =====
+function renderRecords() {
+  const records = getRecords();
+  const search = (document.getElementById('searchInput')?.value || '').toLowerCase();
+  const container = document.getElementById('recordList');
+
+  let filtered = records.filter(r => {
+    if (currentFilter !== 'all' && r.type !== currentFilter) return false;
+    if (search) {
+      const text = `${r.docSender} ${r.docReceiver} ${r.docReceiveLocation} ${r.shipName} ${r.location}`.toLowerCase();
+      return text.includes(search);
+    }
+    return true;
+  });
+
+  if (filtered.length === 0) {
+    container.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">📭</div>
+        <p>目前沒有紀錄</p>
+      </div>`;
+    return;
+  }
+
+  // 按日期分組
+  const groups = {};
+  filtered.forEach(r => {
+    const date = r.docDate || '未指定日期';
+    if (!groups[date]) groups[date] = [];
+    groups[date].push(r);
+  });
+
+  let html = '';
+  Object.keys(groups).sort().reverse().forEach(date => {
+    const displayDate = date === new Date().toISOString().split('T')[0] ? '📅 今天' :
+                        date === getYesterday() ? '📅 昨天' : `📅 ${date}`;
+    html += `<div class="date-group-title">${displayDate}（${groups[date].length} 筆）</div>`;
+    groups[date].forEach(r => {
+      const typeClass = r.type === 'receive' ? 'type-receive' : 'type-send';
+      const badgeClass = r.type === 'receive' ? 'badge-receive' : 'badge-send';
+      const dirLabel = r.type === 'receive' ? '收件' : '寄出';
+      const qtyLabel = r.docQuantity && r.docQuantity > 1 ? ' x' + r.docQuantity : '';
+      const typeText = dirLabel + (r.itemType ? '·' + r.itemType : '') + qtyLabel;
+      html += `
+        <div class="record-card ${typeClass}" onclick="showDetail('${r.id}')">
+          <span class="record-type-badge ${badgeClass}">${typeText}</span>
+          <div class="record-title">${r.docSender || '未填寄件人'}</div>
+          <div class="record-detail"><span class="icon">🚢</span>${r.shipName}</div>
+          <div class="record-detail"><span class="icon">🗺️</span>${r.location || ((r.fromPort||'') + ' → ' + (r.toPort||''))}</div>
+          ${r.docTime ? `<div class="record-detail"><span class="icon">🕐</span>${r.docDate !== r.docArriveDate && r.docArriveDate ? r.docDate + ' ' : ''}${r.docTime}${r.docArriveTime ? ' → ' + (r.docDate !== r.docArriveDate && r.docArriveDate ? r.docArriveDate + ' ' : '') + r.docArriveTime : ''}</div>` : ''}
+          ${r.docReceiver ? `<div class="record-detail"><span class="icon">📬</span>收：${r.docReceiver}</div>` : ''}
+          ${r.docReceiveLocation ? `<div class="record-detail"><span class="icon">🏢</span>${r.docReceiveLocation}</div>` : ''}
+          ${r.photoCount ? `<div class="record-detail"><span class="icon">📷</span>已傳送 ${r.photoCount} 張照片</div>` : ''}
+          <div class="record-actions">
+            <button onclick="event.stopPropagation(); deleteRecord('${r.id}')" class="delete-btn">🗑 刪除</button>
+          </div>
+        </div>`;
+    });
+  });
+
+  container.innerHTML = html;
+}
+
+function getYesterday() {
+  const d = new Date();
+  d.setDate(d.getDate() - 1);
+  return d.toISOString().split('T')[0];
+}
+
+function setFilter(filter, btn) {
+  currentFilter = filter;
+  document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+  btn.classList.add('active');
+  renderRecords();
+}
+
+function showDetail(id) {
+  const record = getRecords().find(r => r.id === id);
+  if (!record) return;
+  const dirText2 = record.type === 'receive' ? '📥 收件' : '📤 寄出';
+  const detailQty = record.docQuantity && record.docQuantity > 1 ? ' x' + record.docQuantity : '';
+  const typeText = dirText2 + (record.itemType ? '【' + record.itemType + detailQty + '】' : '');
+  const routeDisplay = record.location || ((record.fromPort||'') + ' → ' + (record.toPort||''));
+  document.getElementById('detailContent').innerHTML = `
+    <div style="line-height:2; font-size:15px">
+      <p><strong>類型：</strong>${typeText}</p>
+      <p><strong>🚢 船隻：</strong>${record.shipName}</p>
+      <p><strong>🗺️ 航程：</strong>${routeDisplay}</p>
+      <p><strong>📅 出發日期：</strong>${record.docDate}</p>
+      ${record.docArriveDate ? `<p><strong>📅 到港日期：</strong>${record.docArriveDate}</p>` : ''}
+      ${record.docTime ? `<p><strong>🕐 出發時間：</strong>${record.docTime}</p>` : ''}
+      ${record.docArriveTime ? `<p><strong>🏁 到港時間：</strong>${record.docArriveTime}</p>` : ''}
+      ${record.docSender ? `<p><strong>📮 寄件人：</strong>${record.docSender}</p>` : ''}
+      ${record.docSendLocation ? `<p><strong>🏢 寄件地點：</strong>${record.docSendLocation}</p>` : ''}
+      ${record.docReceiver ? `<p><strong>📬 收件人：</strong>${record.docReceiver}</p>` : ''}
+      ${record.docReceiveLocation ? `<p><strong>🏢 收件地點：</strong>${record.docReceiveLocation}</p>` : ''}
+      ${record.docNote ? `<p><strong>💬 備註：</strong>${record.docNote}</p>` : ''}
+      ${record.photoCount ? `<p><strong>📷 照片：</strong>已傳送 ${record.photoCount} 張至 LINE</p>` : ''}
+      <p style="color:var(--text-secondary); font-size:12px; margin-top:12px">建立時間：${new Date(record.createdAt).toLocaleString('zh-TW')}</p>
+    </div>`;
+  document.getElementById('detailModal').classList.add('show');
+}
+
+function closeModal() {
+  document.getElementById('detailModal').classList.remove('show');
+}
+
+function deleteRecord(id) {
+  if (!confirm('確定要刪除這筆紀錄嗎？')) return;
+  const records = getRecords().filter(r => r.id !== id);
+  saveRecords(records);
+  renderRecords();
+  showToast('🗑 已刪除');
+}
+
+// ===== 統計 =====
+function renderStats() {
+  const records = getRecords();
+  const today = new Date().toISOString().split('T')[0];
+
+  document.getElementById('statTotal').textContent = records.length;
+  document.getElementById('statToday').textContent = records.filter(r => r.docDate === today).length;
+  document.getElementById('statReceive').textContent = records.filter(r => r.type === 'receive').length;
+  document.getElementById('statSend').textContent = records.filter(r => r.type === 'send').length;
+
+  // 船隻統計
+  const shipCount = {};
+  records.forEach(r => { shipCount[r.shipName] = (shipCount[r.shipName] || 0) + 1; });
+  const shipHtml = Object.entries(shipCount)
+    .sort((a, b) => b[1] - a[1])
+    .map(([name, count]) => `
+      <div style="display:flex; justify-content:space-between; padding:10px 0; border-bottom:1px solid #f0f0f0">
+        <span>🚢 ${name}</span>
+        <span style="font-weight:600; color:var(--primary)">${count} 筆</span>
+      </div>`).join('');
+  document.getElementById('shipStats').innerHTML = shipHtml || '<div style="color:var(--text-secondary); padding:12px 0">尚無資料</div>';
+
+  // 地點統計
+  const locCount = {};
+  records.forEach(r => {
+    const route = r.location || ((r.fromPort||'') + ' → ' + (r.toPort||''));
+    locCount[route] = (locCount[route] || 0) + 1;
+  });
+  const locHtml = Object.entries(locCount)
+    .sort((a, b) => b[1] - a[1])
+    .map(([name, count]) => `
+      <div style="display:flex; justify-content:space-between; padding:10px 0; border-bottom:1px solid #f0f0f0">
+        <span>🗺️ ${name}</span>
+        <span style="font-weight:600; color:var(--primary)">${count} 筆</span>
+      </div>`).join('');
+  document.getElementById('locationStats').innerHTML = locHtml || '<div style="color:var(--text-secondary); padding:12px 0">尚無資料</div>';
+}
+
+// ===== 管理船隻/地點 =====
+function renderManage() {
+  const senders = getSenders();
+  const ships = getShips();
+  const locs = getLocations();
+  const routes = getRoutes();
+
+  document.getElementById('manageSenders').innerHTML = senders.map((s, i) => `
+    <div class="manage-item">
+      <div style="display:flex;align-items:center;gap:8px">
+        <div style="display:flex;flex-direction:column;gap:2px">
+          <button class="sort-btn" onclick="moveSender(${i},'top')" ${i === 0 ? 'disabled' : ''}>⤒</button>
+          <button class="sort-btn" onclick="moveSender(${i},-1)" ${i === 0 ? 'disabled' : ''}>▲</button>
+          <button class="sort-btn" onclick="moveSender(${i},1)" ${i === senders.length - 1 ? 'disabled' : ''}>▼</button>
+          <button class="sort-btn" onclick="moveSender(${i},'bottom')" ${i === senders.length - 1 ? 'disabled' : ''}>⤓</button>
+        </div>
+        <span>👤</span>
+        <input class="edit-name" value="${s}" onblur="editSender(${i}, this.value)" onkeydown="if(event.key==='Enter'){this.blur()}">
+      </div>
+      <button onclick="removeSender('${s}')">✕</button>
+    </div>`).join('');
+
+  const receivers = getReceivers();
+  document.getElementById('manageReceivers').innerHTML = receivers.map((r, i) => `
+    <div class="manage-item">
+      <div style="display:flex;align-items:center;gap:8px">
+        <div style="display:flex;flex-direction:column;gap:2px">
+          <button class="sort-btn" onclick="moveReceiver(${i},'top')" ${i === 0 ? 'disabled' : ''}>⤒</button>
+          <button class="sort-btn" onclick="moveReceiver(${i},-1)" ${i === 0 ? 'disabled' : ''}>▲</button>
+          <button class="sort-btn" onclick="moveReceiver(${i},1)" ${i === receivers.length - 1 ? 'disabled' : ''}>▼</button>
+          <button class="sort-btn" onclick="moveReceiver(${i},'bottom')" ${i === receivers.length - 1 ? 'disabled' : ''}>⤓</button>
+        </div>
+        <span>📬</span>
+        <input class="edit-name" value="${r}" onblur="editReceiver(${i}, this.value)" onkeydown="if(event.key==='Enter'){this.blur()}">
+      </div>
+      <button onclick="removeReceiver('${r}')">✕</button>
+    </div>`).join('');
+
+  document.getElementById('manageShips').innerHTML = ships.map((s, i) => `
+    <div class="manage-item">
+      <div style="display:flex;align-items:center;gap:8px">
+        <div style="display:flex;flex-direction:column;gap:2px">
+          <button class="sort-btn" onclick="moveShip(${i},'top')" ${i === 0 ? 'disabled' : ''}>⤒</button>
+          <button class="sort-btn" onclick="moveShip(${i},-1)" ${i === 0 ? 'disabled' : ''}>▲</button>
+          <button class="sort-btn" onclick="moveShip(${i},1)" ${i === ships.length - 1 ? 'disabled' : ''}>▼</button>
+          <button class="sort-btn" onclick="moveShip(${i},'bottom')" ${i === ships.length - 1 ? 'disabled' : ''}>⤓</button>
+        </div>
+        <span>🚢</span>
+        <input class="edit-name" value="${s}" onblur="editShip(${i}, this.value)" onkeydown="if(event.key==='Enter'){this.blur()}">
+      </div>
+      <button onclick="removeShip('${s}')">✕</button>
+    </div>`).join('');
+
+  document.getElementById('manageLocations').innerHTML = locs.map((l, i) => `
+    <div class="manage-item">
+      <div style="display:flex;align-items:center;gap:8px">
+        <div style="display:flex;flex-direction:column;gap:2px">
+          <button class="sort-btn" onclick="moveLocation(${i},'top')" ${i === 0 ? 'disabled' : ''}>⤒</button>
+          <button class="sort-btn" onclick="moveLocation(${i},-1)" ${i === 0 ? 'disabled' : ''}>▲</button>
+          <button class="sort-btn" onclick="moveLocation(${i},1)" ${i === locs.length - 1 ? 'disabled' : ''}>▼</button>
+          <button class="sort-btn" onclick="moveLocation(${i},'bottom')" ${i === locs.length - 1 ? 'disabled' : ''}>⤓</button>
+        </div>
+        <span>📍</span>
+        <input class="edit-name" value="${l}" onblur="editLocation(${i}, this.value)" onkeydown="if(event.key==='Enter'){this.blur()}">
+      </div>
+      <button onclick="removeLocation('${l}')">✕</button>
+    </div>`).join('');
+
+  const itemTypes = getItemTypes();
+  document.getElementById('manageItemTypes').innerHTML = itemTypes.map((t, i) => `
+    <div class="manage-item">
+      <div style="display:flex;align-items:center;gap:8px">
+        <div style="display:flex;flex-direction:column;gap:2px">
+          <button class="sort-btn" onclick="moveItemType(${i},'top')" ${i === 0 ? 'disabled' : ''}>⤒</button>
+          <button class="sort-btn" onclick="moveItemType(${i},-1)" ${i === 0 ? 'disabled' : ''}>▲</button>
+          <button class="sort-btn" onclick="moveItemType(${i},1)" ${i === itemTypes.length - 1 ? 'disabled' : ''}>▼</button>
+          <button class="sort-btn" onclick="moveItemType(${i},'bottom')" ${i === itemTypes.length - 1 ? 'disabled' : ''}>⤓</button>
+        </div>
+        <span>📋</span>
+        <input class="edit-name" value="${t}" onblur="editItemType(${i}, this.value)" onkeydown="if(event.key==='Enter'){this.blur()}">
+        ${t === '公文' ? '<span style="font-size:12px;color:var(--text-secondary)">（預設）</span>' : ''}
+      </div>
+      ${t === '公文' ? '' : `<button onclick="removeItemType('${t}')">✕</button>`}
+    </div>`).join('');
+
+  document.getElementById('manageRoutes').innerHTML = routes.map((r, i) => `
+    <div class="manage-route-card" style="border:1px solid #e0e0e0;border-radius:8px;margin-bottom:10px;overflow:hidden">
+      <div class="manage-item" style="margin-bottom:0">
+        <div style="display:flex;align-items:center;gap:8px">
+          <div style="display:flex;flex-direction:column;gap:2px">
+            <button class="sort-btn" onclick="moveRoute(${i},'top')" ${i === 0 ? 'disabled' : ''}>⤒</button>
+            <button class="sort-btn" onclick="moveRoute(${i},-1)" ${i === 0 ? 'disabled' : ''}>▲</button>
+            <button class="sort-btn" onclick="moveRoute(${i},1)" ${i === routes.length - 1 ? 'disabled' : ''}>▼</button>
+            <button class="sort-btn" onclick="moveRoute(${i},'bottom')" ${i === routes.length - 1 ? 'disabled' : ''}>⤓</button>
+          </div>
+          <div style="flex:1;cursor:pointer" onclick="toggleSchedulePanel(${i})">
+            <div style="font-weight:500">${r.name}</div>
+            <div style="font-size:12px;color:var(--text-secondary)">${r.from} → ${r.via ? r.via + ' → ' : ''}${r.to}　｜　${(r.schedules || []).length} 班次 ▾</div>
+          </div>
+        </div>
+        <button onclick="removeRoute(${i})">✕</button>
+      </div>
+      <div id="schedulePanel_${i}" style="display:none;padding:8px 12px;background:#f8f9fa;border-top:1px solid #e0e0e0">
+        <div id="scheduleList_${i}">
+          ${(r.schedules || []).map((s, j) => `
+            <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">
+              <input type="time" class="form-input" value="${s.depart}" onchange="editSchedule(${i},${j},'depart',this.value)" style="flex:1;padding:6px;font-size:14px">
+              <span>→</span>
+              <input type="time" class="form-input" value="${s.arrive}" onchange="editSchedule(${i},${j},'arrive',this.value)" style="flex:1;padding:6px;font-size:14px">
+              <button onclick="removeSchedule(${i},${j})" style="background:none;border:none;color:var(--danger);cursor:pointer;font-size:16px;padding:4px">✕</button>
+            </div>
+          `).join('')}
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;margin-top:8px">
+          <input type="time" class="form-input" id="newSchedDepart_${i}" style="flex:1;padding:6px;font-size:14px" placeholder="出發">
+          <span>→</span>
+          <input type="time" class="form-input" id="newSchedArrive_${i}" style="flex:1;padding:6px;font-size:14px" placeholder="到港">
+          <button class="btn btn-primary btn-small" onclick="addSchedule(${i})" style="white-space:nowrap">新增</button>
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+function addShip() {
+  const input = document.getElementById('newShip');
+  const name = input.value.trim();
+  if (!name) return;
+  const ships = getShips();
+  if (ships.includes(name)) { showToast('⚠️ 已存在'); return; }
+  ships.push(name);
+  saveShips(ships);
+  input.value = '';
+  renderManage();
+  renderShipTags();
+  showToast('✅ 已新增船隻');
+}
+
+function addLocation() {
+  const input = document.getElementById('newLocation');
+  const name = input.value.trim();
+  if (!name) return;
+  const locs = getLocations();
+  if (locs.includes(name)) { showToast('⚠️ 已存在'); return; }
+  locs.push(name);
+  saveLocations(locs);
+  input.value = '';
+  renderManage();
+  renderLocationTags();
+  showToast('✅ 已新增地點');
+}
+
+function removeShip(name) {
+  if (!confirm(`確定刪除「${name}」？`)) return;
+  saveShips(getShips().filter(s => s !== name));
+  renderManage();
+  renderShipTags();
+}
+
+function removeLocation(name) {
+  if (!confirm(`確定刪除「${name}」？`)) return;
+  saveLocations(getLocations().filter(l => l !== name));
+  renderManage();
+  renderPortDropdowns();
+}
+
+function editItem(getter, setter, index, newValue, refreshFns) {
+  const list = getter();
+  const trimmed = newValue.trim();
+  if (!trimmed) { showToast('⚠️ 名稱不能為空'); refreshFns.forEach(fn => fn()); return; }
+  if (list.indexOf(trimmed) !== -1 && list.indexOf(trimmed) !== index) { showToast('⚠️ 已存在相同名稱'); refreshFns.forEach(fn => fn()); return; }
+  list[index] = trimmed;
+  setter(list);
+  refreshFns.forEach(fn => fn());
+}
+
+function editSender(i, val) { editItem(getSenders, saveSenders, i, val, [renderManage, renderSenderDropdown]); }
+function editShip(i, val) { editItem(getShips, saveShips, i, val, [renderManage, renderShipTags]); }
+function editLocation(i, val) { editItem(getLocations, saveLocations, i, val, [renderManage, renderPortDropdowns]); }
+function editItemType(i, val) { editItem(getItemTypes, saveItemTypes, i, val, [renderManage, renderItemTypeTags]); }
+
+function addSender() {
+  const input = document.getElementById('newSender');
+  const name = input.value.trim();
+  if (!name) return;
+  const list = getSenders();
+  if (list.includes(name)) { showToast('⚠️ 已存在'); return; }
+  list.push(name);
+  saveSenders(list);
+  input.value = '';
+  renderManage();
+  renderSenderDropdown();
+  showToast('✅ 已新增寄件人');
+}
+
+function removeSender(name) {
+  if (!confirm(`確定刪除「${name}」？`)) return;
+  saveSenders(getSenders().filter(s => s !== name));
+  renderManage();
+  renderSenderDropdown();
+}
+
+function moveSender(i, dir) { moveItem(getSenders, saveSenders, i, dir, [renderManage, renderSenderDropdown]); }
+
+function addReceiver() {
+  const input = document.getElementById('newReceiver');
+  const name = input.value.trim();
+  if (!name) return;
+  const list = getReceivers();
+  if (list.includes(name)) { showToast('⚠️ 已存在'); return; }
+  list.push(name);
+  saveReceivers(list);
+  input.value = '';
+  renderManage();
+  renderReceiverDropdown();
+  showToast('✅ 已新增收件人');
+}
+
+function removeReceiver(name) {
+  if (!confirm(`確定刪除「${name}」？`)) return;
+  saveReceivers(getReceivers().filter(s => s !== name));
+  renderManage();
+  renderReceiverDropdown();
+}
+
+function moveReceiver(i, dir) { moveItem(getReceivers, saveReceivers, i, dir, [renderManage, renderReceiverDropdown]); }
+function editReceiver(i, val) { editItem(getReceivers, saveReceivers, i, val, [renderManage, renderReceiverDropdown]); }
+
+function moveItem(getter, setter, index, dir, refreshFns) {
+  const list = getter();
+  let newIndex;
+  if (dir === 'top') newIndex = 0;
+  else if (dir === 'bottom') newIndex = list.length - 1;
+  else newIndex = index + dir;
+  if (newIndex < 0 || newIndex >= list.length || newIndex === index) return;
+  const [item] = list.splice(index, 1);
+  list.splice(newIndex, 0, item);
+  setter(list);
+  refreshFns.forEach(fn => fn());
+}
+
+function moveItemType(i, dir) { moveItem(getItemTypes, saveItemTypes, i, dir, [renderManage, renderItemTypeTags]); }
+function moveShip(i, dir) { moveItem(getShips, saveShips, i, dir, [renderManage, renderShipTags]); }
+function moveLocation(i, dir) { moveItem(getLocations, saveLocations, i, dir, [renderManage, renderPortDropdowns]); }
+function moveRoute(i, dir) { moveItem(getRoutes, saveRoutes, i, dir, [renderManage, renderRouteTags]); }
+
+function addItemType() {
+  const input = document.getElementById('newItemType');
+  const name = input.value.trim();
+  if (!name) return;
+  const types = getItemTypes();
+  if (types.includes(name)) { showToast('⚠️ 已存在'); return; }
+  types.push(name);
+  saveItemTypes(types);
+  input.value = '';
+  renderManage();
+  renderItemTypeTags();
+  showToast('✅ 已新增物件類型');
+}
+
+function removeItemType(name) {
+  if (name === '公文') { showToast('⚠️ 公文為預設類型，無法刪除'); return; }
+  if (!confirm(`確定刪除「${name}」？`)) return;
+  saveItemTypes(getItemTypes().filter(t => t !== name));
+  if (currentItemType === name) { currentItemType = '公文'; }
+  renderManage();
+  renderItemTypeTags();
+}
+
+function addRoute() {
+  const name = document.getElementById('newRouteName').value.trim();
+  const from = document.getElementById('newRouteFrom').value.trim();
+  const to = document.getElementById('newRouteTo').value.trim();
+  const via = document.getElementById('newRouteVia').value.trim();
+  if (!name || !from || !to) { showToast('⚠️ 請填寫航線名稱、出發地和目的地'); return; }
+  const routes = getRoutes();
+  routes.push({ name, from, to, via, note: '' });
+  saveRoutes(routes);
+  ['newRouteName', 'newRouteFrom', 'newRouteTo', 'newRouteVia'].forEach(id => document.getElementById(id).value = '');
+  autoAddOption(from, getLocations, saveLocations);
+  autoAddOption(to, getLocations, saveLocations);
+  renderManage();
+  renderRouteTags();
+  renderPortDropdowns();
+  showToast('✅ 已新增航線');
+}
+
+function removeRoute(index) {
+  const routes = getRoutes();
+  if (!confirm(`確定刪除「${routes[index].name}」？`)) return;
+  routes.splice(index, 1);
+  saveRoutes(routes);
+  renderManage();
+  renderRouteTags();
+}
+
+function toggleSchedulePanel(index) {
+  const panel = document.getElementById('schedulePanel_' + index);
+  panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+}
+
+function addSchedule(routeIndex) {
+  const depart = document.getElementById('newSchedDepart_' + routeIndex).value;
+  const arrive = document.getElementById('newSchedArrive_' + routeIndex).value;
+  if (!depart || !arrive) { showToast('⚠️ 請輸入出發和到港時間'); return; }
+  const routes = getRoutes();
+  if (!routes[routeIndex].schedules) routes[routeIndex].schedules = [];
+  routes[routeIndex].schedules.push({ depart, arrive });
+  routes[routeIndex].schedules.sort((a, b) => a.depart.localeCompare(b.depart));
+  saveRoutes(routes);
+  renderManage();
+  showToast('✅ 已新增班次');
+  setTimeout(() => { document.getElementById('schedulePanel_' + routeIndex).style.display = 'block'; }, 50);
+}
+
+function removeSchedule(routeIndex, schedIndex) {
+  const routes = getRoutes();
+  routes[routeIndex].schedules.splice(schedIndex, 1);
+  saveRoutes(routes);
+  renderManage();
+  setTimeout(() => { document.getElementById('schedulePanel_' + routeIndex).style.display = 'block'; }, 50);
+}
+
+function editSchedule(routeIndex, schedIndex, field, value) {
+  const routes = getRoutes();
+  routes[routeIndex].schedules[schedIndex][field] = value;
+  saveRoutes(routes);
+}
+
+// ===== 匯出匯入 =====
+function exportData() {
+  const data = {
+    records: getRecords(),
+    ships: getShips(),
+    locations: getLocations(),
+    routes: getRoutes(),
+    exportedAt: new Date().toISOString()
+  };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `公文登記_${new Date().toISOString().split('T')[0]}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('📥 已匯出');
+}
+
+function exportCSV() {
+  const records = getRecords();
+  if (records.length === 0) { showToast('⚠️ 沒有資料可匯出'); return; }
+
+  const BOM = '﻿';
+  const headers = ['方向', '物件類型', '數量', '寄件人', '寄件地點', '收件人', '收件地點', '船隻', '出發地', '目的地', '經由', '航程', '出發日期', '到港日期', '出發時間', '到港時間', '備註', '建立時間'];
+  const rows = records.map(r => [
+    r.type === 'receive' ? '收件' : '寄出',
+    r.itemType || '', r.docQuantity || 1, r.docSender || '', r.docSendLocation || '', r.docReceiver || '', r.docReceiveLocation || '',
+    r.shipName,
+    r.fromPort || '', r.toPort || '', r.viaPort || '',
+    r.location || ((r.fromPort||'') + ' → ' + (r.toPort||'')),
+    r.docDate, r.docArriveDate || '', r.docTime, r.docArriveTime || '', r.docNote,
+    new Date(r.createdAt).toLocaleString('zh-TW')
+  ].map(v => `"${(v || '').replace(/"/g, '""')}"`).join(','));
+
+  const csv = BOM + [headers.join(','), ...rows].join('\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `公文登記_${new Date().toISOString().split('T')[0]}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('📊 已匯出 CSV');
+}
+
+function importData(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (data.records) {
+        const existing = getRecords();
+        const merged = [...data.records, ...existing];
+        const unique = merged.filter((r, i, arr) => arr.findIndex(x => x.id === r.id) === i);
+        saveRecords(unique);
+      }
+      if (data.ships) {
+        const merged = [...new Set([...getShips(), ...data.ships])];
+        saveShips(merged);
+      }
+      if (data.locations) {
+        const merged = [...new Set([...getLocations(), ...data.locations])];
+        saveLocations(merged);
+      }
+      if (data.routes) {
+        const existing = getRoutes();
+        const existingNames = existing.map(r => r.name);
+        data.routes.forEach(r => { if (!existingNames.includes(r.name)) existing.push(r); });
+        saveRoutes(existing);
+      }
+      renderShipTags();
+      renderRouteTags();
+      renderPortDropdowns();
+      showToast('✅ 匯入成功');
+    } catch {
+      showToast('❌ 檔案格式錯誤');
+    }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+
+// ===== 照片處理 =====
+function handlePhotos(event) {
+  const files = event.target.files;
+  if (!files.length) return;
+  const maxSize = 1024; // resize to max 1024px
+  Array.from(files).forEach(file => {
+    if (!file.type.startsWith('image/')) return;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      const img = new Image();
+      img.onload = function() {
+        const canvas = document.createElement('canvas');
+        let w = img.width, h = img.height;
+        if (w > maxSize || h > maxSize) {
+          if (w > h) { h = Math.round(h * maxSize / w); w = maxSize; }
+          else { w = Math.round(w * maxSize / h); h = maxSize; }
+        }
+        canvas.width = w;
+        canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        const base64 = canvas.toDataURL('image/jpeg', 0.8);
+        pendingPhotos.push(base64);
+        renderPhotoPreview();
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+  event.target.value = '';
+}
+
+function renderPhotoPreview() {
+  const list = document.getElementById('photoPreviewList');
+  const placeholder = document.getElementById('photoPlaceholder');
+  const clearBtn = document.getElementById('clearPhotoBtn');
+  const countLabel = document.getElementById('photoCountLabel');
+  if (pendingPhotos.length === 0) {
+    list.innerHTML = '';
+    placeholder.style.display = 'flex';
+    clearBtn.disabled = true;
+    countLabel.textContent = '';
+    return;
+  }
+  placeholder.style.display = 'none';
+  clearBtn.disabled = false;
+  countLabel.textContent = `（已選 ${pendingPhotos.length} 張）`;
+  list.innerHTML = pendingPhotos.map((src, i) => `
+    <div class="photo-thumb-wrap">
+      <img src="${src}" onclick="event.stopPropagation(); viewPhoto('${i}', 'pending')">
+      <button class="photo-thumb-remove" onclick="event.stopPropagation(); removePhoto(${i})">✕</button>
+    </div>`).join('');
+}
+
+function removePhoto(index) {
+  pendingPhotos.splice(index, 1);
+  renderPhotoPreview();
+}
+
+function clearPhotos() {
+  pendingPhotos = [];
+  renderPhotoPreview();
+}
+
+function viewPhoto(index, source) {
+  let src;
+  if (source === 'pending') {
+    src = pendingPhotos[index];
+  } else {
+    const record = getRecords().find(r => r.id === source);
+    if (record && record.photos) src = record.photos[index];
+  }
+  if (!src) return;
+  document.getElementById('photoViewerImg').src = src;
+  document.getElementById('photoViewer').classList.add('show');
+}
+
+function closePhotoViewer() {
+  document.getElementById('photoViewer').classList.remove('show');
+  document.getElementById('photoViewerImg').src = '';
+}
+
+function base64ToBlob(base64) {
+  const parts = base64.split(',');
+  const mime = parts[0].match(/:(.*?);/)[1];
+  const bytes = atob(parts[1]);
+  const arr = new Uint8Array(bytes.length);
+  for (let i = 0; i < bytes.length; i++) arr[i] = bytes.charCodeAt(i);
+  return new Blob([arr], { type: mime });
+}
+
+// ===== Toast =====
+function showToast(msg) {
+  const toast = document.getElementById('toast');
+  toast.textContent = msg;
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 2500);
+}
+
+// ===== 初始化 =====
+function init() {
+  const now = new Date();
+  const todayStr = now.toISOString().split('T')[0];
+  document.getElementById('docDate').value = todayStr;
+  document.getElementById('docArriveDate').value = todayStr;
+  document.getElementById('docTime').value = now.toTimeString().slice(0, 5);
+
+  document.getElementById('docDate').addEventListener('change', function() {
+    const arriveDate = document.getElementById('docArriveDate');
+    if (!arriveDate.value || arriveDate.value < this.value) {
+      arriveDate.value = this.value;
+    }
+  });
+
+  const DATA_VERSION = 27;
+  const savedVersion = parseInt(localStorage.getItem('doc_data_version') || '0');
+  if (savedVersion < DATA_VERSION) {
+    // 合併新的預設項目，不刪除使用者已有的資料
+    const mergeList = (getter, saver, defaults) => {
+      const existing = getter();
+      defaults.forEach(d => { if (!existing.includes(d)) existing.push(d); });
+      saver(existing);
+    };
+    const mergeRoutes = () => {
+      const existing = getRoutes();
+      const existingMap = new Map(existing.map(r => [r.name, r]));
+      DEFAULT_ROUTES.forEach(r => {
+        if (existingMap.has(r.name)) {
+          Object.assign(existingMap.get(r.name), r);
+        } else {
+          existing.push(r);
+        }
+      });
+      const removeNames = ['南竿→莒光（東莒）', '南竿→莒光（西莒）', '南竿→大坵', '小三通（南竿→黃岐）', '小三通（南竿→琅岐）'];
+      const cleaned = existing.filter(r => !removeNames.includes(r.name));
+      saveRoutes(cleaned);
+    };
+    mergeList(getShips, saveShips, DEFAULT_SHIPS);
+    mergeList(getLocations, saveLocations, DEFAULT_LOCATIONS);
+    const removePorts = ['大坵碼頭', '黃岐碼頭', '琅岐碼頭'];
+    saveLocations(getLocations().filter(l => !removePorts.includes(l)));
+    mergeList(getItemTypes, saveItemTypes, DEFAULT_ITEM_TYPES);
+    let itemTypeList = getItemTypes().filter(t => t !== '物資' && t !== '文件');
+    if (itemTypeList.includes('其他')) {
+      itemTypeList = itemTypeList.filter(t => t !== '其他');
+      itemTypeList.push('其他');
+    }
+    saveItemTypes(itemTypeList);
+    mergeList(getSenders, saveSenders, DEFAULT_SENDERS);
+    // 修正人員名字並重新排序
+    const renameSenders = {
+      '王蓉凱': '王蕾凱', '王文玲': '王文琦', '甘麗菟': '甘麗莞',
+      '陳學騏': '陳學驊', '邱鴛花': '邱鶯花', '曾以樹室主任': '曹以樹室主任'
+    };
+    const removeSenderNames = new Set([
+      '黃騰毅 處長', '王海平 課長',
+      '林室主任振平', '林室主任銀平',
+      '鄭室主任渝靜', '鄭室主任浠榕',
+      '曾室主任以樹', '皇室主任(禎)',
+      '陳金松約用', '陳約用金松', '陳妗月', '全紅',
+      '傅真', '王蓉凱', '王文玲', '甘麗菟', '陳學騏', '邱鴛花'
+    ]);
+    let oldSenders = getSenders().map(s => renameSenders[s] || s).filter(s => !removeSenderNames.has(s));
+    const defaultSet = new Set(DEFAULT_SENDERS);
+    const userAdded = oldSenders.filter(s => !defaultSet.has(s));
+    saveSenders([...DEFAULT_SENDERS, ...userAdded]);
+    // 收件人清單：初次建立或合併
+    const defaultRecvSet = new Set(DEFAULT_RECEIVERS);
+    let oldReceivers = getReceivers();
+    const userAddedRecv = oldReceivers.filter(r => !defaultRecvSet.has(r));
+    saveReceivers([...DEFAULT_RECEIVERS, ...userAddedRecv]);
+    mergeRoutes();
+    localStorage.setItem('doc_data_version', DATA_VERSION.toString());
+  }
+  if (!getData(STORAGE_KEYS.ships)) saveShips([...DEFAULT_SHIPS]);
+  if (!getData(STORAGE_KEYS.locations)) saveLocations([...DEFAULT_LOCATIONS]);
+  if (!getData('doc_routes')) saveRoutes([...DEFAULT_ROUTES]);
+  if (!getData('doc_item_types')) saveItemTypes([...DEFAULT_ITEM_TYPES]);
+  if (!getData('doc_senders')) saveSenders([...DEFAULT_SENDERS]);
+  if (!getData('doc_receivers')) saveReceivers([...DEFAULT_RECEIVERS]);
+
+  renderItemTypeTags();
+  renderSenderDropdown();
+  renderReceiverDropdown();
+  renderSendLocationTags();
+  renderReceiveLocationTags();
+  renderShipTags();
+  renderRouteTags();
+  renderPortDropdowns();
+}
+
+// 點擊彈窗外面關閉
+document.getElementById('detailModal').addEventListener('click', function(e) {
+  if (e.target === this) closeModal();
+});
+
+init();
+</script>
+</body>
+</html>
