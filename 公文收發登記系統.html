@@ -1406,26 +1406,25 @@ function getLineTarget() {
 }
 
 function sendLineNotify(record, photos) {
-  const dirText = record.type === 'receive' ? '📥 收件' : '📤 寄出';
+  const dirText = record.type === 'receive' ? '收件' : '寄出';
   const itemText = record.itemType || '公文';
   const routeText = record.location || ((record.fromPort||'') + ' → ' + (record.toPort||''));
-  const qtyText = record.docQuantity && record.docQuantity > 1 ? ` x${record.docQuantity}` : '';
-  const msg = `${dirText}【${itemText}${qtyText}】登記通知\n` +
-    `━━━━━━━━━━━━\n` +
-    `🚢 船隻：${record.shipName}\n` +
-    `🗺️ 航程：${routeText}\n` +
-    `📅 出發日期：${record.docDate}\n` +
-    (record.docArriveDate ? `📅 到港日期：${record.docArriveDate}\n` : '') +
-    (record.docTime ? `🕐 出發：${record.docTime}\n` : '') +
-    (record.docArriveTime ? `🏁 到港：${record.docArriveTime}\n` : '') +
-    (record.docSender ? `📮 寄件人：${record.docSender}\n` : '') +
-    (record.docSendLocation ? `🏢 寄件地點：${record.docSendLocation}\n` : '') +
-    (record.docReceiver ? `📬 收件人：${record.docReceiver}\n` : '') +
-    (record.docReceiveLocation ? `🏢 收件地點：${record.docReceiveLocation}\n` : '') +
-    (record.docQuantity && record.docQuantity > 1 ? `📦 數量：${record.docQuantity}\n` : '') +
-    (record.docNote ? `💬 備註：${record.docNote}\n` : '') +
-    (record.photoCount ? `📷 照片：${record.photoCount} 張\n` : '') +
-    `━━━━━━━━━━━━`;
+  const msg = `${dirText}【${itemText}】登記通知\n` +
+    `--------------------\n` +
+    `船隻：${record.shipName}\n` +
+    `航程：${routeText}\n` +
+    `出發日期：${record.docDate}\n` +
+    (record.docArriveDate ? `到港日期：${record.docArriveDate}\n` : '') +
+    (record.docTime ? `出發：${record.docTime}\n` : '') +
+    (record.docArriveTime ? `到港：${record.docArriveTime}\n` : '') +
+    (record.docSender ? `寄件人：${record.docSender}\n` : '') +
+    (record.docSendLocation ? `寄件地點：${record.docSendLocation}\n` : '') +
+    (record.docReceiver ? `收件人：${record.docReceiver}\n` : '') +
+    (record.docReceiveLocation ? `收件地點：${record.docReceiveLocation}\n` : '') +
+    `數量：${record.docQuantity || 1}\n` +
+    (record.docNote ? `備註：${record.docNote}\n` : '') +
+    (record.photoCount ? `照片：${record.photoCount} 張\n` : '') +
+    `--------------------`;
 
   const target = getLineTarget();
   const photoList = (photos || []).slice(0, 4);
