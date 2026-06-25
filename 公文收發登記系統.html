@@ -848,6 +848,9 @@ const DEFAULT_ROUTES = [
     { depart: '17:10', arrive: '17:25' }, { depart: '17:30', arrive: '17:45' }
   ] },
   { name: '南竿→東引', from: '南竿福澳港', to: '東引中柱港', via: '', note: '島際交通', schedules: [] },
+  { name: '東引→南竿', from: '東引中柱港', to: '南竿福澳港', via: '', note: '島際交通', schedules: [
+    { depart: '07:30', arrive: '09:00' }
+  ] },
   { name: '南竿→西莒→東莒', from: '南竿福澳港', to: '東莒猛澳港', via: '西莒青帆港', note: '單月航線', schedules: [{ depart: '07:00', arrive: '07:40' }, { depart: '11:00', arrive: '11:40' }, { depart: '14:30', arrive: '15:10' }] },
   { name: '西莒→東莒→南竿', from: '西莒青帆港', to: '南竿福澳港', via: '東莒猛澳港', note: '單月航線（回程）', schedules: [{ depart: '07:50', arrive: '09:00' }, { depart: '11:50', arrive: '13:00' }, { depart: '15:20', arrive: '16:30' }] },
   { name: '南竿→東莒→西莒', from: '南竿福澳港', to: '西莒青帆港', via: '東莒猛澳港', note: '雙月航線', schedules: [{ depart: '07:00', arrive: '08:00' }, { depart: '11:00', arrive: '12:00' }, { depart: '14:30', arrive: '15:30' }] },
@@ -2108,7 +2111,7 @@ function init() {
     }
   });
 
-  const DATA_VERSION = 27;
+  const DATA_VERSION = 28;
   const savedVersion = parseInt(localStorage.getItem('doc_data_version') || '0');
   if (savedVersion < DATA_VERSION) {
     // 合併新的預設項目，不刪除使用者已有的資料
