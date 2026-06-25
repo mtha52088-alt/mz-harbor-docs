@@ -490,9 +490,10 @@ body {
   <div class="card">
     <div class="card-title">👤 寄件人 <span style="color:var(--danger);font-size:13px">*必填</span></div>
     <div class="form-group">
-      <select class="form-select" id="docSender" onchange="localStorage.setItem('last_sender', this.value)">
+      <select class="form-select" id="docSender" onchange="localStorage.setItem('last_sender', this.value); toggleSenderCustom(this)">
         <option value="">選擇寄件人</option>
       </select>
+      <input type="text" class="form-input" id="docSenderCustom" placeholder="輸入寄件人" style="display:none;margin-top:8px">
     </div>
     <div class="form-group" style="margin-bottom:0">
       <label class="form-label">寄件地點（選填）</label>
@@ -955,7 +956,26 @@ function renderSenderDropdown() {
   const sel = document.getElementById('docSender');
   const current = sel.value || localStorage.getItem('last_sender') || '';
   sel.innerHTML = '<option value="">選擇寄件人</option>' +
-    senders.map(s => `<option value="${s}"${s === current ? ' selected' : ''}>${s}</option>`).join('');
+    senders.map(s => `<option value="${s}"${s === current ? ' selected' : ''}>${s}</option>`).join('') +
+    '<option value="__custom__">✏️ 自行輸入</option>';
+  toggleSenderCustom(sel);
+}
+
+function toggleSenderCustom(sel) {
+  const customInput = document.getElementById('docSenderCustom');
+  if (sel.value === '__custom__') {
+    customInput.style.display = '';
+    customInput.focus();
+  } else {
+    customInput.style.display = 'none';
+    customInput.value = '';
+  }
+}
+
+function getSenderValue() {
+  const sel = document.getElementById('docSender');
+  if (sel.value === '__custom__') return document.getElementById('docSenderCustom').value.trim();
+  return sel.value;
 }
 
 function renderReceiverDropdown() {
@@ -1001,6 +1021,7 @@ function selectSendLocation(btn, loc) {
     btn.classList.add('selected');
     input.value = loc;
   }
+  filterRoutesByLocation();
   refreshScheduleIfNeeded();
 }
 
@@ -1035,6 +1056,7 @@ function refreshScheduleIfNeeded() {
 
 function filterRoutesByLocation() {
   const loc = document.getElementById('docReceiveLocation').value.trim();
+  const sendLoc = document.getElementById('docSendLocation').value.trim();
   const routes = getRoutes();
   const container = document.getElementById('routeTags');
   clearRouteSelection();
@@ -1052,7 +1074,9 @@ function filterRoutesByLocation() {
   }
   const filtered = [];
   routes.forEach((r, i) => {
-    if (r.to === loc || r.via === loc) filtered.push({ route: r, index: i });
+    const matchesReceive = r.to === loc || r.via === loc;
+    const matchesSend = !sendLoc || r.from === sendLoc || r.via === sendLoc;
+    if (matchesReceive && matchesSend) filtered.push({ route: r, index: i });
   });
   if (filtered.length === 0) {
     container.innerHTML = '<div style="color:var(--text-secondary);font-size:14px;padding:8px 0">無符合的航線</div>';
@@ -1236,7 +1260,7 @@ function saveRoutes(routes) { setData('doc_routes', routes); cloudSetConfig('doc
 
 // ===== 表單送出 =====
 function submitRecord() {
-  const docSender = document.getElementById('docSender').value.trim();
+  const docSender = getSenderValue();
   const docReceiver = getReceiverValue();
   const docSendLocation = document.getElementById('docSendLocation').value.trim();
   const docReceiveLocation = getReceiveLocationValue();
