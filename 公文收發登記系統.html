@@ -1336,7 +1336,7 @@ function submitRecord() {
   autoAddOption(fromPort, getLocations, saveLocations);
   autoAddOption(toPort, getLocations, saveLocations);
 
-  sendLineNotify(record);
+  sendLineNotify(record, pendingPhotos.slice());
   showToast('✅ 登記成功！');
   resetForm();
   renderShipTags();
@@ -1405,7 +1405,7 @@ function getLineTarget() {
   return localStorage.getItem('line_target_id') || LINE_DEFAULT_TARGET;
 }
 
-function sendLineNotify(record) {
+function sendLineNotify(record, photos) {
   const dirText = record.type === 'receive' ? '📥 收件' : '📤 寄出';
   const itemText = record.itemType || '公文';
   const routeText = record.location || ((record.fromPort||'') + ' → ' + (record.toPort||''));
@@ -1428,17 +1428,23 @@ function sendLineNotify(record) {
     `━━━━━━━━━━━━`;
 
   const target = getLineTarget();
-  fetch(LINE_PROXY_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'text/plain' },
-    body: JSON.stringify({
-      action: 'sendLine',
-      to: target,
-      messages: [{ type: 'text', text: msg }]
+  const photoList = (photos || []).slice(0, 4);
+
+  Promise.all(photoList.map(uploadPhotoToCloud))
+    .then(urls => {
+      const validUrls = urls.filter(Boolean);
+      const messages = [{ type: 'text', text: msg }].concat(
+        validUrls.map(url => ({ type: 'image', originalContentUrl: url, previewImageUrl: url }))
+      );
+      return cloudRequest('sendLine', { to: target, messages });
     })
-  }).then(res => {
-    if (!res.ok) res.text().then(err => console.error('LINE API error:', err));
-  }).catch(err => console.error('LINE send failed:', err));
+    .catch(err => console.error('LINE send failed:', err));
+}
+
+function uploadPhotoToCloud(base64Data) {
+  return cloudRequest('uploadPhoto', { data: base64Data })
+    .then(res => res && res.url)
+    .catch(err => { console.error('照片上傳失敗:', err); return null; });
 }
 
 function testLine() {
