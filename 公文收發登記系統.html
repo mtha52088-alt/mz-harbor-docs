@@ -1026,6 +1026,7 @@ function selectSendLocation(btn, loc) {
   }
   filterRoutesByLocation();
   refreshScheduleIfNeeded();
+  checkSameLocation();
 }
 
 function renderReceiveLocationTags() {
@@ -1047,6 +1048,15 @@ function selectReceiveLocation(btn, loc) {
   }
   filterRoutesByLocation();
   refreshScheduleIfNeeded();
+  checkSameLocation();
+}
+
+function checkSameLocation() {
+  const sendLoc = document.getElementById('docSendLocation').value.trim();
+  const recvLoc = document.getElementById('docReceiveLocation').value.trim();
+  if (sendLoc && recvLoc && sendLoc === recvLoc) {
+    showToast('⚠️ 寄件地點與收件地點相同，請確認是否正確');
+  }
 }
 
 function refreshScheduleIfNeeded() {
@@ -1234,6 +1244,7 @@ function swapPorts() {
   document.querySelectorAll('#receiveLocationTags .quick-tag').forEach(t => {
     t.classList.toggle('selected', t.textContent === recvInput.value);
   });
+  checkSameLocation();
 
   filterRoutesByLocation();
 
@@ -1297,6 +1308,9 @@ function submitRecord() {
   if (!fromPort) { showToast('⚠️ 請選擇出發地'); return; }
   if (!toPort) { showToast('⚠️ 請選擇目的地'); return; }
   if (!docDate) { showToast('⚠️ 請選擇日期'); return; }
+  if (docSendLocation && docReceiveLocation && docSendLocation === docReceiveLocation) {
+    if (!confirm('⚠️ 寄件地點與收件地點相同，確定要送出嗎？')) return;
+  }
 
   const location = viaPort ? `${fromPort} → ${viaPort} → ${toPort}` : `${fromPort} → ${toPort}`;
 
