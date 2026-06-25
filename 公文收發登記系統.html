@@ -895,10 +895,34 @@ function cloudAddRecord(record) {
 function cloudDeleteRecord(id) {
   cloudRequest('deleteRecord', { id }).catch(err => console.error('雲端刪除失敗:', err));
 }
+function cloudSetConfig(key, value) {
+  cloudRequest('setConfig', { key, value }).catch(err => console.error('雲端設定同步失敗:', err));
+}
+
+function refreshConfigFromCloud() {
+  return cloudRequest('getAllConfig', {}).then(config => {
+    if (!config) return;
+    const keys = ['doc_ships', 'doc_locations', 'doc_item_types', 'doc_senders', 'doc_receivers', 'doc_routes'];
+    let changed = false;
+    keys.forEach(key => {
+      if (config[key] !== undefined && config[key] !== null) {
+        setData(key, config[key]);
+        changed = true;
+      }
+    });
+    if (changed) {
+      renderShipTags(); renderRouteTags(); renderPortDropdowns();
+      renderItemTypeTags(); renderSenderDropdown(); renderReceiverDropdown();
+      renderSendLocationTags(); renderReceiveLocationTags();
+      if (document.getElementById('page-settings').classList.contains('active')) renderManage();
+    }
+  }).catch(err => console.error('雲端設定讀取失敗:', err));
+}
+
 function getShips() { return getData(STORAGE_KEYS.ships) || [...DEFAULT_SHIPS]; }
-function saveShips(ships) { setData(STORAGE_KEYS.ships, ships); }
+function saveShips(ships) { setData(STORAGE_KEYS.ships, ships); cloudSetConfig(STORAGE_KEYS.ships, ships); }
 function getLocations() { return getData(STORAGE_KEYS.locations) || [...DEFAULT_LOCATIONS]; }
-function saveLocations(locs) { setData(STORAGE_KEYS.locations, locs); }
+function saveLocations(locs) { setData(STORAGE_KEYS.locations, locs); cloudSetConfig(STORAGE_KEYS.locations, locs); }
 
 // ===== 頁面切換 =====
 function switchPage(page, btn) {
@@ -908,7 +932,7 @@ function switchPage(page, btn) {
   btn.classList.add('active');
   if (page === 'records') { renderRecords(); refreshRecordsFromCloud(); }
   if (page === 'stats') { renderStats(); refreshRecordsFromCloud(); }
-  if (page === 'settings') { renderManage(); loadTargetId(); renderPortDropdowns(); }
+  if (page === 'settings') { renderManage(); loadTargetId(); renderPortDropdowns(); refreshConfigFromCloud(); }
 }
 
 // ===== 寄送方向與物件類型 =====
@@ -919,12 +943,12 @@ function setDirection(type) {
 }
 
 function getItemTypes() { return getData('doc_item_types') || [...DEFAULT_ITEM_TYPES]; }
-function saveItemTypes(types) { setData('doc_item_types', types); }
+function saveItemTypes(types) { setData('doc_item_types', types); cloudSetConfig('doc_item_types', types); }
 
 function getSenders() { return getData('doc_senders') || [...DEFAULT_SENDERS]; }
-function saveSenders(list) { setData('doc_senders', list); }
+function saveSenders(list) { setData('doc_senders', list); cloudSetConfig('doc_senders', list); }
 function getReceivers() { return getData('doc_receivers') || [...DEFAULT_RECEIVERS]; }
-function saveReceivers(list) { setData('doc_receivers', list); }
+function saveReceivers(list) { setData('doc_receivers', list); cloudSetConfig('doc_receivers', list); }
 
 function renderSenderDropdown() {
   const senders = getSenders();
@@ -1208,7 +1232,7 @@ function selectTag(btn, inputId) {
 }
 
 function getRoutes() { return getData('doc_routes') || [...DEFAULT_ROUTES]; }
-function saveRoutes(routes) { setData('doc_routes', routes); }
+function saveRoutes(routes) { setData('doc_routes', routes); cloudSetConfig('doc_routes', routes); }
 
 // ===== 表單送出 =====
 function submitRecord() {
@@ -2137,6 +2161,7 @@ function init() {
   renderRouteTags();
   renderPortDropdowns();
   refreshRecordsFromCloud();
+  refreshConfigFromCloud();
 }
 
 // 點擊彈窗外面關閉
