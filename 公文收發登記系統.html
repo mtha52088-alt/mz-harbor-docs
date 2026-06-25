@@ -1327,7 +1327,6 @@ function resetForm() {
 }
 
 // ===== LINE Messaging API =====
-const LINE_CHANNEL_TOKEN = 'B78eiQSjGuzgOKGkiQlRMkn3sdJFPUGJx45YpLCZ6TgCc7TJNV+ZqOPoifggLhDhi+GPshzVIwVag9vC8FqKSrXOERgXiVvOAJqI7R1Mmyxok2NbH0o78dU4FHmcoF8PBkzlqT8FZ8hOsVyJpkQFRgdB04t89/1O/w1cDnyilFU=';
 const LINE_DEFAULT_TARGET = 'Ud65b762e9bce90db077397655791d48e';
 const LINE_PROXY_URL = 'https://script.google.com/macros/s/AKfycbzJYAgw676DpyGRfZUk2YI6ss_B3cyiaS_kvA2PieS7g0cQ2XLEL0bcU8WvqsVUJS0p/exec';
 
@@ -1378,7 +1377,7 @@ function sendLineNotify(record) {
     method: 'POST',
     headers: { 'Content-Type': 'text/plain' },
     body: JSON.stringify({
-      token: LINE_CHANNEL_TOKEN,
+      action: 'sendLine',
       to: target,
       messages: [{ type: 'text', text: msg }]
     })
