@@ -859,8 +859,42 @@ function getData(key) {
 }
 function setData(key, val) { localStorage.setItem(key, JSON.stringify(val)); }
 
-function getRecords() { return getData(STORAGE_KEYS.records) || []; }
-function saveRecords(records) { setData(STORAGE_KEYS.records, records); }
+let recordsCache = null;
+function getRecords() {
+  if (recordsCache === null) recordsCache = getData(STORAGE_KEYS.records) || [];
+  return recordsCache;
+}
+function saveRecords(records) {
+  recordsCache = records;
+  setData(STORAGE_KEYS.records, records);
+}
+
+function cloudRequest(action, payload) {
+  return fetch(LINE_PROXY_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain' },
+    body: JSON.stringify(Object.assign({ action }, payload))
+  }).then(res => res.json());
+}
+
+function refreshRecordsFromCloud() {
+  return cloudRequest('getRecords', {}).then(records => {
+    if (Array.isArray(records)) {
+      records.sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
+      saveRecords(records);
+      if (document.getElementById('page-records').classList.contains('active')) renderRecords();
+      if (document.getElementById('page-stats').classList.contains('active')) renderStats();
+    }
+  }).catch(err => console.error('雲端同步失敗:', err));
+}
+
+function cloudAddRecord(record) {
+  cloudRequest('addRecord', { record }).catch(err => console.error('雲端新增失敗:', err));
+}
+
+function cloudDeleteRecord(id) {
+  cloudRequest('deleteRecord', { id }).catch(err => console.error('雲端刪除失敗:', err));
+}
 function getShips() { return getData(STORAGE_KEYS.ships) || [...DEFAULT_SHIPS]; }
 function saveShips(ships) { setData(STORAGE_KEYS.ships, ships); }
 function getLocations() { return getData(STORAGE_KEYS.locations) || [...DEFAULT_LOCATIONS]; }
@@ -872,8 +906,8 @@ function switchPage(page, btn) {
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   document.getElementById('page-' + page).classList.add('active');
   btn.classList.add('active');
-  if (page === 'records') renderRecords();
-  if (page === 'stats') renderStats();
+  if (page === 'records') { renderRecords(); refreshRecordsFromCloud(); }
+  if (page === 'stats') { renderStats(); refreshRecordsFromCloud(); }
   if (page === 'settings') { renderManage(); loadTargetId(); renderPortDropdowns(); }
 }
 
@@ -1217,6 +1251,7 @@ function submitRecord() {
   const records = getRecords();
   records.unshift(record);
   saveRecords(records);
+  cloudAddRecord(record);
 
   autoAddOption(shipName, getShips, saveShips);
   autoAddOption(fromPort, getLocations, saveLocations);
@@ -1455,6 +1490,7 @@ function deleteRecord(id) {
   if (!confirm('確定要刪除這筆紀錄嗎？')) return;
   const records = getRecords().filter(r => r.id !== id);
   saveRecords(records);
+  cloudDeleteRecord(id);
   renderRecords();
   showToast('🗑 已刪除');
 }
@@ -1880,9 +1916,11 @@ function importData(event) {
       const data = JSON.parse(e.target.result);
       if (data.records) {
         const existing = getRecords();
-        const merged = [...data.records, ...existing];
-        const unique = merged.filter((r, i, arr) => arr.findIndex(x => x.id === r.id) === i);
-        saveRecords(unique);
+        const existingIds = new Set(existing.map(r => r.id));
+        const newOnes = data.records.filter(r => !existingIds.has(r.id));
+        const merged = [...newOnes, ...existing];
+        saveRecords(merged);
+        newOnes.forEach(cloudAddRecord);
       }
       if (data.ships) {
         const merged = [...new Set([...getShips(), ...data.ships])];
@@ -2098,6 +2136,7 @@ function init() {
   renderShipTags();
   renderRouteTags();
   renderPortDropdowns();
+  refreshRecordsFromCloud();
 }
 
 // 點擊彈窗外面關閉
