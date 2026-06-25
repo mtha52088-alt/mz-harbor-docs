@@ -1411,14 +1411,14 @@ function sendLineNotify(record, photos) {
   const routeText = record.location || ((record.fromPort||'') + ' → ' + (record.toPort||''));
   const msg = `${dirText}【${itemText}】登記通知\n` +
     `--------------------\n` +
-    `船隻：${record.shipName}\n` +
-    `航程：${routeText}\n` +
+    (record.docSender ? `寄件人：${record.docSender}\n` : '') +
+    (record.docSendLocation ? `寄件地點：${record.docSendLocation}\n` : '') +
     `出發日期：${record.docDate}\n` +
     (record.docArriveDate ? `到港日期：${record.docArriveDate}\n` : '') +
     (record.docTime ? `出發：${record.docTime}\n` : '') +
     (record.docArriveTime ? `到港：${record.docArriveTime}\n` : '') +
-    (record.docSender ? `寄件人：${record.docSender}\n` : '') +
-    (record.docSendLocation ? `寄件地點：${record.docSendLocation}\n` : '') +
+    `船隻：${record.shipName}\n` +
+    `航程：${routeText}\n` +
     (record.docReceiver ? `收件人：${record.docReceiver}\n` : '') +
     (record.docReceiveLocation ? `收件地點：${record.docReceiveLocation}\n` : '') +
     `數量：${record.docQuantity || 1}\n` +
